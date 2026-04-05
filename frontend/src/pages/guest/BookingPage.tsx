@@ -12,14 +12,19 @@ import {
   LoadingOverlay,
   Badge,
   Divider,
-  Box,
+  ThemeIcon,
+  Stepper,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
+import { IconClock, IconCalendarEvent, IconUser, IconMail, IconCheck } from '@tabler/icons-react';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ru';
 import { guestApi } from '../../api/client';
 import { ApiValidationError } from '../../api/client';
 import type { EventType, TimeSlot, CreateBookingRequest } from '../../types/api';
+
+dayjs.locale('ru');
 
 export function BookingPage() {
   const { eventTypeId } = useParams<{ eventTypeId: string }>();
@@ -31,6 +36,7 @@ export function BookingPage() {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [fetchingSlots, setFetchingSlots] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
 
   // Form state
   const [guestName, setGuestName] = useState('');
@@ -42,11 +48,11 @@ export function BookingPage() {
       setLoading(true);
       const data = await guestApi.getPublicEventType(eventTypeId!);
       setEventType(data);
-      document.title = `Book ${data.name} - Calendar Booking`;
+      document.title = `Бронирование: ${data.name}`;
     } catch {
       notifications.show({
-        title: 'Error',
-        message: 'Event type not found',
+        title: 'Ошибка',
+        message: 'Тип встречи не найден',
         color: 'red',
       });
       navigate('/');
@@ -78,16 +84,15 @@ export function BookingPage() {
       setAvailableSlots(response.items);
       if (response.items.length === 0) {
         notifications.show({
-          title: 'No Slots',
-          message: 'No available slots for this date',
+          title: 'Нет слотов',
+          message: 'На выбранную дату нет доступных слотов',
           color: 'yellow',
         });
       }
-    } catch (error) {
-      console.error('Failed to fetch slots:', error);
+    } catch {
       notifications.show({
-        title: 'Error',
-        message: 'Failed to load available slots',
+        title: 'Ошибка',
+        message: 'Не удалось загрузить доступные слоты',
         color: 'red',
       });
       setAvailableSlots([]);
@@ -102,25 +107,30 @@ export function BookingPage() {
     if (date) {
       const dateObj = new Date(date);
       fetchAvailableSlots(dateObj);
+      setActiveStep(1);
     }
+  };
+
+  const handleSlotSelect = (slot: TimeSlot) => {
+    setSelectedSlot(slot);
+    setActiveStep(2);
   };
 
   const handleBooking = async () => {
     if (!selectedSlot || !guestName.trim() || !guestEmail.trim()) {
       notifications.show({
-        title: 'Validation Error',
-        message: 'Please fill in all required fields',
+        title: 'Ошибка валидации',
+        message: 'Пожалуйста, заполните все обязательные поля',
         color: 'red',
       });
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(guestEmail)) {
       notifications.show({
-        title: 'Validation Error',
-        message: 'Please enter a valid email address',
+        title: 'Ошибка валидации',
+        message: 'Пожалуйста, введите корректный email',
         color: 'red',
       });
       return;
@@ -138,32 +148,25 @@ export function BookingPage() {
       await guestApi.createBooking(bookingData);
 
       notifications.show({
-        title: 'Success!',
-        message: 'Your booking has been created successfully',
+        title: 'Успешно!',
+        message: 'Ваша встреча успешно забронирована',
         color: 'green',
+        icon: <IconCheck />,
       });
 
       navigate('/');
     } catch (error) {
-      console.error('Failed to create booking:', error);
-
       if (error instanceof ApiValidationError && error.data?.fieldErrors) {
         const messages = error.data.fieldErrors.map((e) => e.message).join(', ');
         notifications.show({
-          title: 'Validation Error',
+          title: 'Ошибка валидации',
           message: messages,
-          color: 'red',
-        });
-      } else if (error instanceof Error) {
-        notifications.show({
-          title: 'Error',
-          message: error.message,
           color: 'red',
         });
       } else {
         notifications.show({
-          title: 'Error',
-          message: 'Failed to create booking',
+          title: 'Ошибка',
+          message: 'Не удалось создать бронирование',
           color: 'red',
         });
       }
@@ -186,128 +189,150 @@ export function BookingPage() {
 
   return (
     <Container size="md" py="xl">
-      <Title order={1} mb="md">
-        Book: {eventType.name}
-      </Title>
-
-      <Card withBorder mb="xl" padding="lg">
-        <Stack gap="md">
-          <Group>
-            <Title order={3}>{eventType.name}</Title>
-            <Badge color="blue" size="lg">
-              {eventType.durationMinutes} min
-            </Badge>
-          </Group>
-          <Text>{eventType.description}</Text>
-        </Stack>
-      </Card>
-
-      <Card withBorder mb="xl" padding="lg">
-        <Title order={4} mb="md">
-          1. Select Date
-        </Title>
-        <DatePickerInput
-          value={selectedDate}
-          onChange={handleDateChange}
-          placeholder="Pick a date"
-          label="Date"
-          minDate={dayjs().format('YYYY-MM-DD')}
-          size="md"
-        />
-      </Card>
-
-      {fetchingSlots ? (
-        <Card withBorder mb="xl" padding="lg">
-          <LoadingOverlay visible={fetchingSlots} />
-          <Title order={4} mb="md">
-            2. Select Time Slot
+      <Stack gap="xl">
+        <Stack gap="xs">
+          <Title order={1} size={36}>
+            Бронирование: {eventType.name}
           </Title>
-        </Card>
-      ) : availableSlots.length > 0 ? (
-        <Card withBorder mb="xl" padding="lg">
-          <Title order={4} mb="md">
-            2. Select Time Slot
-          </Title>
-          <Group gap="xs" wrap="wrap">
-            {availableSlots.map((slot) => (
-              <Button
-                key={slot.id}
-                variant={selectedSlot?.id === slot.id ? 'filled' : 'outline'}
-                onClick={() => setSelectedSlot(slot)}
-                size="md"
-              >
-                {dayjs(slot.startTime).format('HH:mm')}
-              </Button>
-            ))}
-          </Group>
-        </Card>
-      ) : selectedDate ? (
-        <Card withBorder mb="xl" padding="lg">
-          <Title order={4} mb="md">
-            2. Select Time Slot
-          </Title>
-          <Text c="dimmed" ta="center" py="xl">
-            No available slots for this date
+          <Text c="dimmed" size="lg">
+            {eventType.description}
           </Text>
-        </Card>
-      ) : null}
+          <Badge size="lg" leftSection={<IconClock size={12} />}>
+            {eventType.durationMinutes} минут
+          </Badge>
+        </Stack>
 
-      {selectedSlot && (
-        <Card withBorder mb="xl" padding="lg">
+        <Stepper active={activeStep} onStepClick={setActiveStep}>
+          <Stepper.Step label="Шаг 1" description="Выберите дату" />
+          <Stepper.Step label="Шаг 2" description="Выберите время" />
+          <Stepper.Step label="Шаг 3" description="Ваши данные" />
+        </Stepper>
+
+        {/* Step 1: Date Selection */}
+        <Card withBorder radius="md" p="xl">
           <Title order={4} mb="md">
-            3. Your Details
+            1. Выберите дату
           </Title>
-          <Stack gap="md">
-            <TextInput
-              label="Your Name"
-              placeholder="John Doe"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              required
-              size="md"
-            />
-            <TextInput
-              label="Email"
-              placeholder="john@example.com"
-              value={guestEmail}
-              onChange={(e) => setGuestEmail(e.target.value)}
-              required
-              size="md"
-            />
-            <Divider />
-            <Box>
-              <Text fw={500} mb="xs">
-                Booking Summary:
-              </Text>
-              <Stack gap="xs">
-                <Text>
-                  <Text component="span" fw={500}>Event:</Text> {eventType.name}
-                </Text>
-                <Text>
-                  <Text component="span" fw={500}>Date:</Text>{' '}
-                  {dayjs(selectedSlot.startTime).format('MMMM DD, YYYY')}
-                </Text>
-                <Text>
-                  <Text component="span" fw={500}>Time:</Text>{' '}
-                  {dayjs(selectedSlot.startTime).format('HH:mm')} -{' '}
-                  {dayjs(selectedSlot.endTime).format('HH:mm')}
-                </Text>
-                <Text>
-                  <Text component="span" fw={500}>Duration:</Text> {eventType.durationMinutes} minutes
-                </Text>
-              </Stack>
-            </Box>
-            <Button
-              onClick={handleBooking}
-              loading={submitting}
-              size="lg"
-              fullWidth
-            >
-              Confirm Booking
-            </Button>
-          </Stack>
+          <DatePickerInput
+            value={selectedDate}
+            onChange={handleDateChange}
+            placeholder="Выберите дату"
+            label="Дата встречи"
+            description="Доступны только будущие даты"
+            minDate={dayjs().format('YYYY-MM-DD')}
+            size="md"
+            locale="ru"
+          />
         </Card>
-      )}
+
+        {/* Step 2: Time Slot Selection */}
+        {fetchingSlots ? (
+          <Card withBorder radius="md" p="xl">
+            <LoadingOverlay visible={fetchingSlots} />
+            <Title order={4} mb="md">
+              2. Выберите время
+            </Title>
+          </Card>
+        ) : availableSlots.length > 0 ? (
+          <Card withBorder radius="md" p="xl">
+            <Title order={4} mb="md">
+              2. Выберите время
+            </Title>
+            <Text size="sm" c="dimmed" mb="md">
+              Доступные слоты на {dayjs(selectedDate).locale('ru').format('D MMMM YYYY')}
+            </Text>
+            <Group gap="xs" wrap="wrap">
+              {availableSlots.map((slot) => (
+                <Button
+                  key={slot.id}
+                  variant={selectedSlot?.id === slot.id ? 'filled' : 'outline'}
+                  onClick={() => handleSlotSelect(slot)}
+                  size="md"
+                  leftSection={<IconClock size={16} />}
+                >
+                  {dayjs(slot.startTime).format('HH:mm')}
+                </Button>
+              ))}
+            </Group>
+          </Card>
+        ) : selectedDate ? (
+          <Card withBorder radius="md" p="xl">
+            <Title order={4} mb="md">
+              2. Выберите время
+            </Title>
+            <Text c="dimmed" ta="center" py="xl">
+              На выбранную дату нет доступных слотов
+            </Text>
+          </Card>
+        ) : null}
+
+        {/* Step 3: Guest Details */}
+        {selectedSlot && (
+          <Card withBorder radius="md" p="xl">
+            <Title order={4} mb="md">
+              3. Ваши данные
+            </Title>
+            <Stack gap="md">
+              <TextInput
+                label="Ваше имя"
+                placeholder="Иван Иванов"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                required
+                size="md"
+                leftSection={<ThemeIcon size={20} radius="xl" variant="light"><IconUser size={14} /></ThemeIcon>}
+              />
+              <TextInput
+                label="Email"
+                placeholder="ivan@example.com"
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+                required
+                size="md"
+                leftSection={<ThemeIcon size={20} radius="xl" variant="light"><IconMail size={14} /></ThemeIcon>}
+              />
+              <Divider my="md" />
+              <Card withBorder p="md" radius="md" bg="var(--mantine-color-gray-0)">
+                <Title order={5} mb="sm">
+                  Детали бронирования:
+                </Title>
+                <Stack gap="xs">
+                  <Group justify="space-between">
+                    <Text c="dimmed">Тип встречи:</Text>
+                    <Text fw={500}>{eventType.name}</Text>
+                  </Group>
+                  <Group justify="space-between">
+                    <Text c="dimmed">Дата:</Text>
+                    <Text fw={500}>
+                      {dayjs(selectedSlot.startTime).locale('ru').format('D MMMM YYYY')}
+                    </Text>
+                  </Group>
+                  <Group justify="space-between">
+                    <Text c="dimmed">Время:</Text>
+                    <Text fw={500}>
+                      {dayjs(selectedSlot.startTime).format('HH:mm')} -{' '}
+                      {dayjs(selectedSlot.endTime).format('HH:mm')}
+                    </Text>
+                  </Group>
+                  <Group justify="space-between">
+                    <Text c="dimmed">Длительность:</Text>
+                    <Text fw={500}>{eventType.durationMinutes} минут</Text>
+                  </Group>
+                </Stack>
+              </Card>
+              <Button
+                onClick={handleBooking}
+                loading={submitting}
+                size="lg"
+                fullWidth
+                leftSection={<IconCalendarEvent size={18} />}
+              >
+                Подтвердить бронирование
+              </Button>
+            </Stack>
+          </Card>
+        )}
+      </Stack>
     </Container>
   );
 }

@@ -5,13 +5,13 @@ export function NotFound() {
   return (
     <Container size="sm" py="xl" ta="center">
       <Title order={1} size={96}>404</Title>
-      <Title order={2} mb="md">Page Not Found</Title>
+      <Title order={2} mb="md">Страница не найдена</Title>
       <Text c="dimmed" mb="xl">
-        The page you're looking for doesn't exist.
+        Страница, которую вы ищете, не существует.
       </Text>
       <Group justify="center">
         <Button component={Link} to="/" size="lg">
-          Go Home
+          На главную
         </Button>
       </Group>
     </Container>

@@ -1,4 +1,4 @@
-import { Group, Button, Container, Title } from '@mantine/core';
+import { Group, Button, Container, Title, rem } from '@mantine/core';
 import { Link, useLocation } from 'react-router-dom';
 
 export function Header() {
@@ -6,29 +6,31 @@ export function Header() {
   const isOwner = location.pathname.startsWith('/owner');
 
   return (
-    <Container fluid>
+    <Container fluid px="md">
       <Group justify="space-between" h="100%">
-        <Group>
-          <Title order={3} c="blue">
+        <Group gap="xs">
+          <Title order={3} c="blue" style={{ fontSize: rem(22) }}>
             <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-              📅 Calendar Booking
+              📅 Бронирование
             </Link>
           </Title>
         </Group>
-        <Group>
+        <Group gap="xs">
           <Button
-            variant={isOwner ? 'light' : 'outline'}
+            variant={isOwner ? 'outline' : 'filled'}
             component={Link}
             to="/"
+            size="compact-sm"
           >
-            Guest View
+            Гость
           </Button>
           <Button
             variant={isOwner ? 'filled' : 'outline'}
             component={Link}
             to="/owner"
+            size="compact-sm"
           >
-            Owner View
+            Владелец
           </Button>
         </Group>
       </Group>

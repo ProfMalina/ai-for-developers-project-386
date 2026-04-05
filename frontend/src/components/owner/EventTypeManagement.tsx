@@ -13,9 +13,10 @@ import {
   ActionIcon,
   LoadingOverlay,
   Pagination,
+  SimpleGrid,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconPlus, IconEdit, IconTrash } from '@tabler/icons-react';
+import { IconPlus, IconEdit, IconTrash, IconClock } from '@tabler/icons-react';
 import { ownerApi } from '../../api/client';
 import type { EventType, CreateEventTypeRequest, UpdateEventTypeRequest } from '../../types/api';
 
@@ -38,11 +39,10 @@ export function EventTypeManagement() {
       const response = await ownerApi.getEventTypes({ page, pageSize: 10 });
       setEventTypes(response.items);
       setTotalPages(response.pagination.totalPages);
-    } catch (error) {
-      console.error('Failed to fetch event types:', error);
+    } catch {
       notifications.show({
-        title: 'Error',
-        message: 'Failed to load event types',
+        title: 'Ошибка',
+        message: 'Не удалось загрузить типы встреч',
         color: 'red',
       });
     } finally {
@@ -73,8 +73,8 @@ export function EventTypeManagement() {
   const handleSubmit = async () => {
     if (!name.trim() || !description.trim() || !durationMinutes) {
       notifications.show({
-        title: 'Validation Error',
-        message: 'All fields are required',
+        title: 'Ошибка валидации',
+        message: 'Все поля обязательны для заполнения',
         color: 'red',
       });
       return;
@@ -82,8 +82,8 @@ export function EventTypeManagement() {
 
     if (typeof durationMinutes === 'number' && durationMinutes < 5) {
       notifications.show({
-        title: 'Validation Error',
-        message: 'Duration must be at least 5 minutes',
+        title: 'Ошибка валидации',
+        message: 'Длительность должна быть не менее 5 минут',
         color: 'red',
       });
       return;
@@ -98,8 +98,8 @@ export function EventTypeManagement() {
         };
         await ownerApi.updateEventType(editingEvent.id, updateData);
         notifications.show({
-          title: 'Success',
-          message: 'Event type updated successfully',
+          title: 'Успешно',
+          message: 'Тип встречи обновлен',
           color: 'green',
         });
       } else {
@@ -110,41 +110,39 @@ export function EventTypeManagement() {
         };
         await ownerApi.createEventType(createData);
         notifications.show({
-          title: 'Success',
-          message: 'Event type created successfully',
+          title: 'Успешно',
+          message: 'Тип встречи создан',
           color: 'green',
         });
       }
       setModalOpened(false);
       fetchEventTypes();
-    } catch (error) {
-      console.error('Failed to save event type:', error);
+    } catch {
       notifications.show({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to save event type',
+        title: 'Ошибка',
+        message: 'Не удалось сохранить тип встречи',
         color: 'red',
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this event type?')) {
+    if (!window.confirm('Вы уверены, что хотите удалить этот тип встречи?')) {
       return;
     }
 
     try {
       await ownerApi.deleteEventType(id);
       notifications.show({
-        title: 'Success',
-        message: 'Event type deleted successfully',
+        title: 'Успешно',
+        message: 'Тип встречи удален',
         color: 'green',
       });
       fetchEventTypes();
-    } catch (error) {
-      console.error('Failed to delete event type:', error);
+    } catch {
       notifications.show({
-        title: 'Error',
-        message: 'Failed to delete event type',
+        title: 'Ошибка',
+        message: 'Не удалось удалить тип встречи',
         color: 'red',
       });
     }
@@ -153,37 +151,58 @@ export function EventTypeManagement() {
   return (
     <div>
       <Group justify="space-between" mb="md">
-        <Text size="lg" fw={500}>Event Types</Text>
+        <Text size="lg" fw={500}>Управление типами встреч</Text>
         <Button leftSection={<IconPlus size={16} />} onClick={openCreateModal}>
-          Add Event Type
+          Добавить тип встречи
         </Button>
       </Group>
 
-      <Card withBorder pos="relative">
+      <Card withBorder pos="relative" radius="md">
         <LoadingOverlay visible={loading} />
         <Stack gap="md">
           {eventTypes.length === 0 && !loading ? (
             <Text c="dimmed" ta="center" py="xl">
-              No event types yet. Click "Add Event Type" to create one.
+              Типы встреч еще не созданы. Нажмите «Добавить тип встречи» для создания.
             </Text>
           ) : (
-            eventTypes.map((eventType) => (
-              <Card key={eventType.id} withBorder padding="md">
-                <Group justify="space-between" mb="xs">
-                  <Text fw={500}>{eventType.name}</Text>
-                  <Group>
-                    <Badge color="blue">{eventType.durationMinutes} min</Badge>
-                    <ActionIcon color="blue" variant="subtle" onClick={() => openEditModal(eventType)}>
-                      <IconEdit size={16} />
-                    </ActionIcon>
-                    <ActionIcon color="red" variant="subtle" onClick={() => handleDelete(eventType.id)}>
-                      <IconTrash size={16} />
-                    </ActionIcon>
-                  </Group>
-                </Group>
-                <Text size="sm" c="dimmed">{eventType.description}</Text>
-              </Card>
-            ))
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              {eventTypes.map((eventType) => (
+                <Card key={eventType.id} withBorder padding="md" radius="md">
+                  <Stack gap="xs">
+                    <Group justify="space-between" wrap="nowrap">
+                      <Text fw={600} size="lg" lineClamp={1}>
+                        {eventType.name}
+                      </Text>
+                      <Badge
+                        variant="light"
+                        leftSection={<IconClock size={12} />}
+                      >
+                        {eventType.durationMinutes} мин
+                      </Badge>
+                    </Group>
+                    <Text size="sm" c="dimmed" lineClamp={2} style={{ minHeight: 40 }}>
+                      {eventType.description}
+                    </Text>
+                    <Group justify="flex-end" mt="xs">
+                      <ActionIcon
+                        color="blue"
+                        variant="subtle"
+                        onClick={() => openEditModal(eventType)}
+                      >
+                        <IconEdit size={18} />
+                      </ActionIcon>
+                      <ActionIcon
+                        color="red"
+                        variant="subtle"
+                        onClick={() => handleDelete(eventType.id)}
+                      >
+                        <IconTrash size={18} />
+                      </ActionIcon>
+                    </Group>
+                  </Stack>
+                </Card>
+              ))}
+            </SimpleGrid>
           )}
         </Stack>
       </Card>
@@ -197,28 +216,28 @@ export function EventTypeManagement() {
       <Modal
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
-        title={editingEvent ? 'Edit Event Type' : 'Create Event Type'}
+        title={editingEvent ? 'Редактировать тип встречи' : 'Создать тип встречи'}
         size="md"
       >
         <Stack>
           <TextInput
-            label="Name"
-            placeholder="e.g., Consultation, Workshop"
+            label="Название"
+            placeholder="Например: Консультация, Мастер-класс"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
           />
           <Textarea
-            label="Description"
-            placeholder="Describe this event type"
+            label="Описание"
+            placeholder="Опишите этот тип встречи"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
             minRows={3}
           />
           <NumberInput
-            label="Duration (minutes)"
-            description="Minimum 5 minutes, maximum 1440 minutes (24 hours)"
+            label="Длительность (минуты)"
+            description="Минимум 5 минут, максимум 1440 минут (24 часа)"
             value={durationMinutes}
             onChange={(value) => setDurationMinutes(value)}
             min={5}
@@ -227,10 +246,10 @@ export function EventTypeManagement() {
           />
           <Group justify="flex-end" mt="md">
             <Button variant="default" onClick={() => setModalOpened(false)}>
-              Cancel
+              Отмена
             </Button>
             <Button onClick={handleSubmit}>
-              {editingEvent ? 'Update' : 'Create'}
+              {editingEvent ? 'Обновить' : 'Создать'}
             </Button>
           </Group>
         </Stack>
