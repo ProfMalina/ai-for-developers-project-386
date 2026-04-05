@@ -266,10 +266,6 @@ namespace OwnerApi {
    * - name: Required, 1-100 characters
    * - description: Required, 1-500 characters
    * - durationMinutes: Required, 5-1440 minutes (5 min to 24 hours)
-   *
-   * @returns 201 Created - Event type successfully created
-   * @returns 400 Bad Request - Validation error in request body
-   * @returns 409 Conflict - Event type with same ID already exists
    */
   @post
   @route("/event-types")
@@ -289,8 +285,6 @@ namespace OwnerApi {
   /**
    * Get all event types with pagination
    * Returns list of all defined event types
-   *
-   * @returns 200 OK - List of event types with pagination metadata
    */
   @get
   @route("/event-types")
@@ -300,9 +294,6 @@ namespace OwnerApi {
 
   /**
    * Get a specific event type by ID
-   *
-   * @returns 200 OK - Event type details
-   * @returns 404 Not Found - Event type with given ID does not exist
    */
   @get
   @route("/event-types/{eventTypeId}")
@@ -315,25 +306,17 @@ namespace OwnerApi {
 
   /**
    * Update an event type
-   * Replaces the entire event type resource
-   *
-   * @returns 200 OK - Updated event type
-   * @returns 400 Bad Request - Validation error
-   * @returns 404 Not Found - Event type not found
+   * Supports partial update - only provided fields will be updated
    */
   @put
   @route("/event-types/{eventTypeId}")
   op updateEventType(
     @path eventTypeId: string,
-    @body body: CreateEventTypeRequest
+    @body body: UpdateEventTypeRequest
   ): EventType | BadRequestError | NotFoundError;
 
   /**
    * Delete an event type
-   *
-   * @returns 204 No Content - Event type successfully deleted
-   * @returns 404 Not Found - Event type not found
-   * @returns 409 Conflict - Cannot delete event type with existing bookings
    */
   @delete
   @route("/event-types/{eventTypeId}")
@@ -356,8 +339,6 @@ namespace OwnerApi {
    * - sortOrder: Sort order (asc/desc, default: asc)
    *
    * Note: All times are returned in the owner's configured timezone
-   *
-   * @returns 200 OK - Paginated list of bookings
    */
   @get
   @route("/bookings")
@@ -380,9 +361,6 @@ namespace OwnerApi {
 
   /**
    * Get a specific booking by ID
-   *
-   * @returns 200 OK - Booking details
-   * @returns 404 Not Found - Booking not found
    */
   @get
   @route("/bookings/{bookingId}")
@@ -395,10 +373,6 @@ namespace OwnerApi {
 
   /**
    * Cancel a booking (Owner can cancel bookings)
-   *
-   * @returns 204 No Content - Booking successfully cancelled
-   * @returns 404 Not Found - Booking not found
-   * @returns 400 Bad Request - Cannot cancel booking (e.g., already started)
    */
   @delete
   @route("/bookings/{bookingId}")
@@ -421,8 +395,6 @@ namespace GuestApi {
   /**
    * Get all available event types with pagination
    * Public page showing name, description, and duration for each event type
-   *
-   * @returns 200 OK - Paginated list of event types
    */
   @get
   @route("/event-types")
@@ -432,9 +404,6 @@ namespace GuestApi {
 
   /**
    * Get a specific event type by ID (public view)
-   *
-   * @returns 200 OK - Event type details
-   * @returns 404 Not Found - Event type not found
    */
   @get
   @route("/event-types/{eventTypeId}")
@@ -466,9 +435,6 @@ namespace GuestApi {
    * - Only future slots are returned (slots that haven't started yet)
    * - Slots that are currently in progress or have already ended are excluded
    * - Times are returned in the specified or owner's default timezone
-   *
-   * @returns 200 OK - Paginated list of available time slots
-   * @returns 404 Not Found - Event type not found
    */
   @get
   @route("/event-types/{eventTypeId}/slots")
@@ -508,17 +474,12 @@ namespace GuestApi {
    * - Cannot book a slot that has already started or ended
    *   - Booking startTime must be in the future (strictly greater than current time)
    * - All times are interpreted in the owner's configured timezone
-   *
-   * @returns 201 Created - Booking successfully created
-   * @returns 400 Bad Request - Validation error (invalid time, email, etc.)
-   * @returns 404 Not Found - Event type not found
-   * @returns 409 Conflict - Slot overlaps with existing booking
    */
   @post
   @route("/bookings")
   op createBooking(
     @body body: CreateBookingRequest
-  ): { @statusCode statusCode: 201, @body booking: Booking } | BadRequestError | NotFoundError | ConflictError;
+  ): { @statusCode statusCode: 201, @body booking: Booking } | BadRequestError | NotFoundError | ConflictError | InvalidTimeError | ValidationError;
 }
 
 // ============================================================================
