@@ -36,6 +36,11 @@ model Owner {
   id: string;
   name: string;
   email: string;
+  /**
+   * Owner's preferred timezone for displaying times
+   * Format: IANA timezone identifier (e.g., "Europe/Moscow", "America/New_York")
+   */
+  timezone: string;
 }
 
 /**
@@ -79,9 +84,19 @@ model Booking {
  */
 model CreateBookingRequest {
   eventTypeId: string;
+  /**
+   * Start time of the booking
+   * Must be in the future (cannot book past or current slots)
+   * ISO 8601 format with timezone info (e.g., "2026-04-05T15:30:00+03:00")
+   */
   startTime: utcDateTime;
   guestName: string;
   guestEmail: string;
+  /**
+   * Optional timezone for the booking.
+   * If not provided, owner's default timezone is used.
+   */
+  timezone?: string;
 }
 
 /**
@@ -166,12 +181,16 @@ namespace OwnerApi {
   /**
    * Get all upcoming bookings
    * Owner can view all bookings across all event types in a single list
+   *
+   * Note: All times are returned in the owner's configured timezone
    */
   @get
   @route("/bookings")
   op getAllBookings(
     @query dateFrom?: utcDateTime,
-    @query dateTo?: utcDateTime
+    @query dateTo?: utcDateTime,
+    /** Optional timezone for displaying booking times */
+    @query timezone?: string
   ): Booking[] | ErrorResponse;
 
   /**
@@ -215,28 +234,49 @@ namespace GuestApi {
   /**
    * Get available time slots for an event type
    * Returns free slots that can be booked
+   *
+   * Business Rules:
+   * - Only future slots are returned (slots that haven't started yet)
+   * - Slots that are currently in progress or have already ended are excluded
+   * - Times are returned in the owner's configured timezone
    */
   @get
   @route("/event-types/{eventTypeId}/slots")
   op getAvailableSlots(
     @path eventTypeId: string,
+    /** Filter slots by date range (ISO 8601 format) */
     @query dateFrom?: utcDateTime,
-    @query dateTo?: utcDateTime
+    /** Filter slots by date range (ISO 8601 format) */
+    @query dateTo?: utcDateTime,
+    /**
+     * Optional timezone for displaying slot times.
+     * If not provided, owner's default timezone is used.
+     * Format: IANA timezone identifier (e.g., "Europe/Moscow")
+     */
+    @query timezone?: string
   ): TimeSlot[] | ErrorResponse;
 
   /**
    * Create a booking
    * Guest selects a time slot and provides their details
    *
-   * Business Rule: No overlapping bookings allowed
-   * - Cannot book a slot that overlaps with an existing booking
-   * - Applies even for different event types
+   * Business Rules:
+   * - No overlapping bookings allowed
+   *   - Cannot book a slot that overlaps with an existing booking
+   *   - Applies even for different event types
+   * - Cannot book a slot that has already started or ended
+   *   - Booking startTime must be in the future (strictly greater than current time)
+   * - All times are interpreted in the owner's configured timezone
+   *
+   * Validation Errors:
+   * - CONFLICT: Slot overlaps with existing booking
+   * - INVALID_TIME: Slot is in the past or has already started
    */
   @post
   @route("/bookings")
   op createBooking(
     @body body: CreateBookingRequest
-  ): Booking | ErrorResponse;
+  ): Booking | ErrorResponse | ConflictError | InvalidTimeError;
 }
 
 // ============================================================================
@@ -259,4 +299,30 @@ model ConflictError {
   error: "CONFLICT";
   message: "The selected time slot is already booked";
   details?: string;
+}
+
+/**
+ * Invalid time error - Used when trying to book a slot in the past
+ */
+model InvalidTimeError {
+  error: "INVALID_TIME";
+  message: "Cannot book a slot that has already started or ended";
+  details?: string;
+}
+
+/**
+ * Timezone configuration
+ * All datetime values should include timezone information (ISO 8601 with offset or Z for UTC)
+ */
+model TimezoneInfo {
+  /**
+   * IANA timezone identifier
+   * Examples: "Europe/Moscow", "America/New_York", "Asia/Tokyo"
+   */
+  timezone: string;
+  /**
+   * Current UTC offset for the timezone
+   * Format: "+HH:MM" or "-HH:MM"
+   */
+  utcOffset: string;
 }

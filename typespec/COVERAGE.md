@@ -51,6 +51,25 @@ This document verifies that the TypeSpec API specification (`typespec/main.tsp`)
   - API returns 409 Conflict when slot is already booked
 - **Status**: ✅ Covered
 
+### Cannot Book Past or Current Slots
+- **Requirement**: Prevent booking slots that have already started or ended
+- **TypeSpec**:
+  - Documented in business rules for `createBooking` operation
+  - `InvalidTimeError` model defined for past slot booking attempts
+  - startTime must be strictly greater than current time
+  - Validation at API level
+- **Status**: ✅ Covered
+
+### Timezone Awareness
+- **Requirement**: All times must respect owner's timezone
+- **TypeSpec**:
+  - `timezone` field added to `Owner` model
+  - Optional `timezone` parameter in `getAvailableSlots` and `getAllBookings` requests
+  - `timezone` field in `CreateBookingRequest`
+  - `TimezoneInfo` model for timezone handling
+  - Format: IANA timezone identifiers (e.g., "Europe/Moscow")
+- **Status**: ✅ Covered
+
 ## ✅ Development Approach Coverage
 
 ### API First
@@ -91,8 +110,8 @@ This document verifies that the TypeSpec API specification (`typespec/main.tsp`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/public/event-types` | View available event types |
-| GET | `/api/public/event-types/{id}/slots` | View available slots for event type |
-| POST | `/api/public/bookings` | Create booking |
+| GET | `/api/public/event-types/{id}/slots` | View available slots for event type (with timezone support, excludes past slots) |
+| POST | `/api/public/bookings` | Create booking (with timezone, validates future slots only) |
 
 ## Next Steps
 
@@ -102,12 +121,14 @@ This document verifies that the TypeSpec API specification (`typespec/main.tsp`)
 4. ⏭️ **Implement React frontend** - Build UI components using API endpoints
 5. ⏭️ **Write tests** - TDD approach using API contract as specification
 
-## Conclusion
+## Заключение
 
-All requirements from `SPEC.MD` are covered by the TypeSpec API specification. The specification:
-- ✅ Defines all domain entities
-- ✅ Covers owner scenarios
-- ✅ Covers guest scenarios
-- ✅ Enforces slot occupancy rule
-- ✅ Follows API First approach
-- ✅ Supports TDD methodology
+Все требования из `SPEC.MD` покрыты спецификацией TypeSpec. Спецификация:
+- ✅ Определяет все доменные сущности
+- ✅ Покрывает сценарии владельца
+- ✅ Покрывает сценарии гостя
+- ✅ Обеспечивает правило занятости слотов
+- ✅ Запрещает бронирование прошедших/текущих слотов
+- ✅ Поддерживает часовые пояса
+- ✅ Следует подходу API First
+- ✅ Поддерживает методологию TDD
