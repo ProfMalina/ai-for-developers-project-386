@@ -204,6 +204,13 @@ model SlotGenerationConfig {
   workingHoursEnd: string;
 
   /**
+   * Interval between slots in minutes
+   * Supported values: 15 or 30 minutes
+   * Default: 30 minutes
+   */
+  intervalMinutes?: 15 | 30;
+
+  /**
    * Days of week when slots should be generated
    * 0 = Sunday, 1 = Monday, ..., 6 = Saturday
    * Default: [1,2,3,4,5] (Monday-Friday)
