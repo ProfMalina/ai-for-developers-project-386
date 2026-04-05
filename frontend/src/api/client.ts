@@ -93,7 +93,7 @@ export const ownerApi = {
   },
 
   async updateEventType(id: string, data: UpdateEventTypeRequest): Promise<EventType> {
-    const response = await apiClient.put<EventType>(`/api/event-types/${id}`, data);
+    const response = await apiClient.patch<EventType>(`/api/event-types/${id}`, data);
     return response.data;
   },
 

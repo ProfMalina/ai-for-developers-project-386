@@ -378,7 +378,7 @@ namespace OwnerApi {
    * Update an event type
    * Supports partial update - only provided fields will be updated
    */
-  @put
+  @patch
   @route("/event-types/{eventTypeId}")
   op updateEventType(
     @path eventTypeId: string,
