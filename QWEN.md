@@ -42,12 +42,14 @@ The application enables a calendar owner to define event types and manage bookin
 - **API First**: Define the API contract (via TypeSpec) before implementation.
 - **TDD (Test-Driven Development)**: Red → Green → Refactor cycle.
 - **No authentication**: The owner is a single pre-configured profile; guests book without accounts.
+- **No global dependencies**: All tools must be run via `npx` or npm scripts, never install globally with `npm install -g`. See [RULES.md](./RULES.md) for details.
 
 ## Key Files
 
 | File | Description |
 |------|-------------|
 | `SPEC.MD` | Project specification — describes domain, roles, rules, tech stack, and tasks |
+| `RULES.md` | **Development rules** — includes prohibition on global dependencies (use npx, not npm install -g) |
 | `README.md` | Minimal README with Hexlet CI status badge |
 | `.pre-commit-config.yaml` | Pre-commit hooks (end-of-file-fixer, trailing-whitespace) |
 | `.github/workflows/hexlet-check.yml` | Hexlet automated test runner (do not modify) |
