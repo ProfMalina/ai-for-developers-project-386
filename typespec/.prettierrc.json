@@ -1,0 +1,3 @@
+{
+  "plugins": ["@typespec/prettier-plugin-typespec"]
+}

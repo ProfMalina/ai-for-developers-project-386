@@ -15,7 +15,6 @@ using TypeSpec.OpenAPI;
  * - Guests can browse event types, view calendar, and book free time slots
  * - No overlapping bookings allowed (even for different event types)
  */
-
 @service(#{ title: "Calendar Booking API" })
 @server("http://localhost:8080", "Development server")
 namespace CalendarBooking;
@@ -192,6 +191,71 @@ model UpdateEventTypeRequest {
 }
 
 /**
+ * Configuration for automatic slot generation
+ * Used to define working hours, days of week, and date range for generating slots
+ */
+model SlotGenerationConfig {
+  /** Start time for working hours in HH:MM format (e.g., "09:00") */
+  @pattern("^([01]\\d|2[0-3]):[0-5]\\d$")
+  workingHoursStart: string;
+
+  /** End time for working hours in HH:MM format (e.g., "18:00") */
+  @pattern("^([01]\\d|2[0-3]):[0-5]\\d$")
+  workingHoursEnd: string;
+
+  /**
+   * Days of week when slots should be generated
+   * 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+   * Default: [1,2,3,4,5] (Monday-Friday)
+   */
+  @minItems(1)
+  @maxItems(7)
+  daysOfWeek?: int32[];
+
+  /**
+   * Start date for slot generation (inclusive)
+   * ISO 8601 date format (e.g., "2026-04-05")
+   * Default: tomorrow's date
+   */
+  dateFrom?: string;
+
+  /**
+   * End date for slot generation (inclusive)
+   * ISO 8601 date format (e.g., "2026-04-05")
+   * Default: 30 days from dateFrom
+   */
+  dateTo?: string;
+
+  /**
+   * Optional timezone for generating slots.
+   * If not provided, owner's default timezone is used.
+   * Format: IANA timezone identifier (e.g., "Europe/Moscow")
+   */
+  @maxLength(50)
+  timezone?: string;
+}
+
+/**
+ * Result of slot generation operation
+ */
+model SlotGenerationResult {
+  /** Number of slots successfully created */
+  slotsCreated: int32;
+
+  /** Number of slots skipped (already existed or fell on excluded days) */
+  slotsSkipped: int32;
+
+  /** Date range for which slots were generated */
+  dateFrom: string;
+
+  /** End date of the generation range */
+  dateTo: string;
+
+  /** List of created slot IDs (limited to first 100) */
+  createdSlotIds?: string[];
+}
+
+/**
  * Pagination metadata for list responses
  */
 model PaginationMeta {
@@ -230,11 +294,14 @@ model PaginatedResponse<T> {
  */
 model PaginationParams {
   /** Page number (1-based, default: 1) */
-  @query @minValue(1)
+  @query
+  @minValue(1)
   page?: int32;
 
   /** Number of items per page (default: 20, max: 100) */
-  @query @minValue(1) @maxValue(100)
+  @query
+  @minValue(1)
+  @maxValue(100)
   pageSize?: int32;
 
   /** Field to sort by (default: createdAt) */
@@ -255,7 +322,6 @@ model PaginationParams {
  */
 @route("/api")
 namespace OwnerApi {
-
   // --- Event Type Management ---
 
   /**
@@ -274,13 +340,14 @@ namespace OwnerApi {
       body: #{
         name: "Workshop",
         description: "Interactive workshop session",
-        durationMinutes: 60
-      }
-    }
+        durationMinutes: 60,
+      },
+    },
   })
-  op createEventType(
-    @body body: CreateEventTypeRequest
-  ): { @statusCode statusCode: 201, @body eventType: EventType } | BadRequestError | ConflictError;
+  op createEventType(@body body: CreateEventTypeRequest): {
+    @statusCode statusCode: 201;
+    @body eventType: EventType;
+  } | BadRequestError | ConflictError;
 
   /**
    * Get all event types with pagination
@@ -288,21 +355,17 @@ namespace OwnerApi {
    */
   @get
   @route("/event-types")
-  op getEventTypes(
-    ...PaginationParams
-  ): { @body body: PaginatedResponse<EventType> };
+  op getEventTypes(...PaginationParams): {
+    @body body: PaginatedResponse<EventType>;
+  };
 
   /**
    * Get a specific event type by ID
    */
   @get
   @route("/event-types/{eventTypeId}")
-  @opExample(#{
-    parameters: #{ eventTypeId: "workshop-001" }
-  })
-  op getEventType(
-    @path eventTypeId: string
-  ): EventType | NotFoundError;
+  @opExample(#{ parameters: #{ eventTypeId: "workshop-001" } })
+  op getEventType(@path eventTypeId: string): EventType | NotFoundError;
 
   /**
    * Update an event type
@@ -312,7 +375,7 @@ namespace OwnerApi {
   @route("/event-types/{eventTypeId}")
   op updateEventType(
     @path eventTypeId: string,
-    @body body: UpdateEventTypeRequest
+    @body body: UpdateEventTypeRequest,
   ): EventType | BadRequestError | NotFoundError;
 
   /**
@@ -321,8 +384,71 @@ namespace OwnerApi {
   @delete
   @route("/event-types/{eventTypeId}")
   op deleteEventType(
-    @path eventTypeId: string
+    @path eventTypeId: string,
   ): void | NotFoundError | ConflictError;
+
+  /**
+   * Generate available time slots for an event type
+   * Automatically creates bookable slots based on working hours and date range
+   *
+   * Business Rules:
+   * - Slots are created based on the event type's duration
+   * - Working hours define the time window for each day
+   * - Only specified days of week are used (default: Monday-Friday)
+   * - Existing slots in the date range are skipped (no duplicates)
+   * - Past dates are excluded from generation
+   *
+   * Example: For a 60-min event type with working hours 09:00-18:00,
+   * slots will be created at 09:00, 10:00, 11:00, ..., 17:00
+   */
+  @post
+  @route("/event-types/{eventTypeId}/slots/generate")
+  op generateSlots(
+    @path eventTypeId: string,
+    @body body: SlotGenerationConfig,
+  ): {
+    @statusCode statusCode: 201;
+    @body result: SlotGenerationResult;
+  } | BadRequestError | NotFoundError;
+
+  /**
+   * Get all time slots for the owner (across all event types) with pagination
+   * Shows both available and booked slots for calendar management
+   *
+   * Query Parameters:
+   * - dateFrom: Filter slots from this date (ISO 8601)
+   * - dateTo: Filter slots until this date (ISO 8601)
+   * - eventTypeId: Filter by specific event type
+   * - isAvailable: Filter by availability (true = free, false = booked)
+   * - page: Page number (default: 1)
+   * - pageSize: Items per page (default: 20, max: 100)
+   */
+  @get
+  @route("/slots")
+  op getAllSlots(
+    /** Filter slots from this date (ISO 8601) */
+    @query dateFrom?: string,
+
+    /** Filter slots until this date (ISO 8601) */
+    @query dateTo?: string,
+
+    /** Filter by event type ID */
+    @query eventTypeId?: string,
+
+    /** Filter by availability */
+    @query isAvailable?: boolean,
+
+    /** Page number (1-based, default: 1) */
+    @query @minValue(1) page?: int32,
+
+    /** Items per page (default: 20, max: 100) */
+    @query
+    @minValue(1)
+    @maxValue(100)
+    pageSize?: int32,
+  ): {
+    @body body: PaginatedResponse<TimeSlot>;
+  };
 
   // --- Booking Management (Owner View) ---
 
@@ -345,31 +471,38 @@ namespace OwnerApi {
   op getAllBookings(
     /** Filter bookings by start date (ISO 8601) */
     @query dateFrom?: utcDateTime,
+
     /** Filter bookings by end date (ISO 8601) */
     @query dateTo?: utcDateTime,
+
     /** Optional timezone for displaying booking times */
     @query timezone?: string,
+
     /** Page number (1-based, default: 1) */
     @query @minValue(1) page?: int32,
+
     /** Items per page (default: 20, max: 100) */
-    @query @minValue(1) @maxValue(100) pageSize?: int32,
+    @query
+    @minValue(1)
+    @maxValue(100)
+    pageSize?: int32,
+
     /** Sort field (default: startTime) */
     @query sortBy?: string,
+
     /** Sort order (asc/desc, default: asc) */
-    @query sortOrder?: "asc" | "desc"
-  ): { @body body: PaginatedResponse<Booking> };
+    @query sortOrder?: "asc" | "desc",
+  ): {
+    @body body: PaginatedResponse<Booking>;
+  };
 
   /**
    * Get a specific booking by ID
    */
   @get
   @route("/bookings/{bookingId}")
-  @opExample(#{
-    parameters: #{ bookingId: "booking-123" }
-  })
-  op getBooking(
-    @path bookingId: string
-  ): Booking | NotFoundError;
+  @opExample(#{ parameters: #{ bookingId: "booking-123" } })
+  op getBooking(@path bookingId: string): Booking | NotFoundError;
 
   /**
    * Cancel a booking (Owner can cancel bookings)
@@ -377,7 +510,7 @@ namespace OwnerApi {
   @delete
   @route("/bookings/{bookingId}")
   op cancelBooking(
-    @path bookingId: string
+    @path bookingId: string,
   ): void | NotFoundError | BadRequestError;
 }
 
@@ -391,16 +524,15 @@ namespace OwnerApi {
  */
 @route("/api/public")
 namespace GuestApi {
-
   /**
    * Get all available event types with pagination
    * Public page showing name, description, and duration for each event type
    */
   @get
   @route("/event-types")
-  op getPublicEventTypes(
-    ...PaginationParams
-  ): { @body body: PaginatedResponse<EventType> };
+  op getPublicEventTypes(...PaginationParams): {
+    @body body: PaginatedResponse<EventType>;
+  };
 
   /**
    * Get a specific event type by ID (public view)
@@ -413,12 +545,10 @@ namespace GuestApi {
       id: "consultation-001",
       name: "Consultation",
       description: "One-on-one consultation session",
-      durationMinutes: 30
-    }
+      durationMinutes: 30,
+    },
   })
-  op getPublicEventType(
-    @path eventTypeId: string
-  ): EventType | NotFoundError;
+  op getPublicEventType(@path eventTypeId: string): EventType | NotFoundError;
 
   /**
    * Get available time slots for an event type with pagination
@@ -440,21 +570,31 @@ namespace GuestApi {
   @route("/event-types/{eventTypeId}/slots")
   op getAvailableSlots(
     @path eventTypeId: string,
+
     /** Filter slots by start date (ISO 8601) */
     @query dateFrom?: utcDateTime,
+
     /** Filter slots by end date (ISO 8601) */
     @query dateTo?: utcDateTime,
+
     /**
      * Optional timezone for displaying slot times.
      * If not provided, owner's default timezone is used.
      * Format: IANA timezone identifier (e.g., "Europe/Moscow")
      */
     @query timezone?: string,
+
     /** Page number (1-based, default: 1) */
     @query @minValue(1) page?: int32,
+
     /** Items per page (default: 20, max: 100) */
-    @query @minValue(1) @maxValue(100) pageSize?: int32
-  ): { @body body: PaginatedResponse<TimeSlot> } | NotFoundError;
+    @query
+    @minValue(1)
+    @maxValue(100)
+    pageSize?: int32,
+  ): {
+    @body body: PaginatedResponse<TimeSlot>;
+  } | NotFoundError;
 
   /**
    * Create a booking
@@ -477,9 +617,16 @@ namespace GuestApi {
    */
   @post
   @route("/bookings")
-  op createBooking(
-    @body body: CreateBookingRequest
-  ): { @statusCode statusCode: 201, @body booking: Booking } | BadRequestError | NotFoundError | ConflictError | InvalidTimeError | ValidationError;
+  op createBooking(@body body: CreateBookingRequest):
+    | {
+        @statusCode statusCode: 201;
+        @body booking: Booking;
+      }
+    | BadRequestError
+    | NotFoundError
+    | ConflictError
+    | InvalidTimeError
+    | ValidationError;
 }
 
 // ============================================================================
