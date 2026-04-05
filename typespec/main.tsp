@@ -1,12 +1,10 @@
 import "@typespec/http";
 import "@typespec/rest";
 import "@typespec/openapi";
-import "@typespec/versioning";
 
 using TypeSpec.Http;
 using TypeSpec.Rest;
-using TypeSpec.OpenApi;
-using TypeSpec.Versioning;
+using TypeSpec.OpenAPI;
 
 /**
  * Calendar Booking API
@@ -17,10 +15,7 @@ using TypeSpec.Versioning;
  * - No overlapping bookings allowed (even for different event types)
  */
 
-@service({
-  title: "Calendar Booking API",
-  version: "1.0.0",
-})
+@service(#{ title: "Calendar Booking API" })
 @server("http://localhost:8080", "Development server")
 namespace CalendarBooking;
 
