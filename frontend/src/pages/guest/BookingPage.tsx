@@ -211,7 +211,7 @@ export function BookingPage() {
           onChange={handleDateChange}
           placeholder="Pick a date"
           label="Date"
-          minDate={dayjs().add(1, 'day').format('YYYY-MM-DD')}
+          minDate={dayjs().format('YYYY-MM-DD')}
           size="md"
         />
       </Card>
