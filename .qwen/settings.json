@@ -9,13 +9,14 @@
       "Bash(rm *)",
       "Bash(git push)",
       "Bash(gh *)",
-      "Bash(cd /home/admn/git/ai-for-developers-project-386 && git commit *)",
-      "Bash(cd /home/admn/git/ai-for-developers-project-386 && git add *)",
+      "Bash(cd ~/git/ai-for-developers-project-386 && git commit *)",
+      "Bash(cd ~/git/ai-for-developers-project-386 && git add *)",
+      "Bash(cd ~/git/ai-for-developers-project-386 && gh *)",
       "Bash(make *)",
       "Bash(git commit *)",
       "Bash(ls *)",
-      "Bash(cd /home/admn/git/ai-for-developers-project-386/frontend && npm run *)",
-      "Bash(cd /home/admn/git/ai-for-developers-project-386/frontend && timeout 10 npm run dev)"
+      "Bash(cd ~/git/ai-for-developers-project-386/frontend && npm run *)",
+      "Bash(cd ~/git/ai-for-developers-project-386/frontend && timeout 10 npm run dev)"
     ]
   },
   "$version": 3
