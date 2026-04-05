@@ -35,7 +35,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <MantineProvider theme={theme}>
-        <DatesProvider settings={{ locale: 'en', firstDayOfWeek: 1 }}>
+        <DatesProvider settings={{ firstDayOfWeek: 1, weekendDays: [0] }}>
           <Notifications position="top-right" />
           <App />
         </DatesProvider>
