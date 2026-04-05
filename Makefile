@@ -1,4 +1,4 @@
-.PHONY: help compile fmt fmt-check lint openapi clean
+.PHONY: help compile fmt fmt-check lint openapi clean install-dev dev
 
 TYPESPEC_DIR := typespec
 
@@ -10,6 +10,15 @@ compile: ## Compile TypeSpec specification
 
 fmt-check: ## Check TypeSpec formatting
 	cd $(TYPESPEC_DIR) && npx prettier --check "**/*.tsp"
+
+clean: ## Remove generated files
+	rm -rf $(TYPESPEC_DIR)/tsp-output
+
+install-dev: ## Install frontend dependencies
+	cd frontend && npm install
+
+dev: ## Start frontend dev server
+	cd frontend && npm run dev
 
 fmt-fix: ## Fix TypeSpec formatting
 	cd $(TYPESPEC_DIR) && npx prettier --write "**/*.tsp"

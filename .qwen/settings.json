@@ -3,6 +3,7 @@
     "allow": [
       "Bash(git add *)",
       "Bash(git add . && git commit *)",
+      "Bash(git add -A && git commit *)",
       "Bash(git commit *)",
       "Bash(git reset *)",
       "Bash(rm *)",
