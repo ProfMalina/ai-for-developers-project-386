@@ -81,23 +81,16 @@ func (s *TimeSlotService) GetAvailableSlots(ctx context.Context, ownerID string,
 
 // GenerateSlots auto-generates time slots based on configuration
 func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID string, req models.SlotGenerationRequest) (*models.SlotGenerationResult, error) {
-	// Determine timezone: prefer request timezone, fallback to owner's timezone
-	loc := time.UTC
-	timezoneName := "UTC"
+	// Always use owner's timezone from database for consistency
+	owner, err := s.ownerRepo.GetByID(ctx, ownerID)
+	if err != nil {
+		return nil, fmt.Errorf("owner not found: %w", err)
+	}
 
-	if req.Timezone != nil && *req.Timezone != "" {
-		timezoneName = *req.Timezone
-		if l, err := time.LoadLocation(timezoneName); err == nil {
+	loc := time.UTC
+	if owner.Timezone != "" {
+		if l, err := time.LoadLocation(owner.Timezone); err == nil {
 			loc = l
-		}
-	} else {
-		// Fallback to owner's timezone from database
-		owner, err := s.ownerRepo.GetByID(ctx, ownerID)
-		if err == nil && owner.Timezone != "" {
-			timezoneName = owner.Timezone
-			if l, err := time.LoadLocation(owner.Timezone); err == nil {
-				loc = l
-			}
 		}
 	}
 	// Parse dates
