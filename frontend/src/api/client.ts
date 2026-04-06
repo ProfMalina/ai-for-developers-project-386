@@ -132,6 +132,25 @@ export const ownerApi = {
     });
     return response.data;
   },
+
+  async generateSlots(
+    eventTypeId: string,
+    data: {
+      workingHoursStart: string;
+      workingHoursEnd: string;
+      intervalMinutes: number;
+      daysOfWeek: number[];
+      dateFrom?: string;
+      dateTo?: string;
+      timezone?: string;
+    }
+  ): Promise<{ slotsCreated: number; createdSlotIds: string[] }> {
+    const response = await apiClient.post<{ slotsCreated: number; createdSlotIds: string[] }>(
+      `/api/event-types/${eventTypeId}/slots/generate`,
+      data
+    );
+    return response.data;
+  },
 };
 
 // Guest API endpoints (Public)
