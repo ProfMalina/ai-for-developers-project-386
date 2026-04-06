@@ -16,7 +16,7 @@ export interface EventType {
 
 export interface TimeSlot {
   id: string;
-  eventTypeId: string;
+  ownerId: string;
   startTime: string; // UTC datetime
   endTime: string; // UTC datetime
   isAvailable: boolean;
@@ -49,6 +49,7 @@ export interface UpdateEventTypeRequest {
 
 export interface CreateBookingRequest {
   eventTypeId: string;
+  slotId?: string;
   startTime: string; // UTC datetime
   guestName: string;
   guestEmail: string;
