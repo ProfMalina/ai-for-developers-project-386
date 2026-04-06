@@ -149,8 +149,8 @@ func (r *EventTypeRepository) Patch(ctx context.Context, id string, req models.U
 	}
 
 	setClauses := []string{}
-	args := []interface{}{}
-	argIdx := 1
+	args := []interface{}{id} // id is always $1
+	argIdx := 2 // start counting from 2 since id is $1
 
 	if req.Name != nil {
 		setClauses = append(setClauses, fmt.Sprintf("name = $%d", argIdx))
@@ -177,11 +177,8 @@ func (r *EventTypeRepository) Patch(ctx context.Context, id string, req models.U
 		return et, nil
 	}
 
-	// Add id to args BEFORE building query
-	args = append(args, id)
-
-	query := fmt.Sprintf("UPDATE event_types SET %s, updated_at = NOW() WHERE id = $%d::uuid RETURNING id, owner_id, name, description, duration_minutes, is_active, created_at, updated_at",
-		strings.Join(setClauses, ", "), argIdx+1)
+	query := fmt.Sprintf("UPDATE event_types SET %s, updated_at = NOW() WHERE id = $1 RETURNING id, owner_id, name, description, duration_minutes, is_active, created_at, updated_at",
+		strings.Join(setClauses, ", "))
 
 	err = db.Pool.QueryRow(ctx, query, args...).Scan(
 		&et.ID, &et.OwnerID, &et.Name, &et.Description, &et.DurationMinutes, &et.IsActive, &et.CreatedAt, &et.UpdatedAt,

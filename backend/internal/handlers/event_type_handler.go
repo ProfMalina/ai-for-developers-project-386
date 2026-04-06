@@ -84,7 +84,7 @@ func (h *EventTypeHandler) Update(c *gin.Context) {
 
 	var req models.UpdateEventTypeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		BadRequest(c, "Invalid request body: "+err.Error())
+		c.JSON(400, gin.H{"error": "Invalid request body", "details": err.Error()})
 		return
 	}
 

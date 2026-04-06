@@ -22,9 +22,10 @@ type CreateEventTypeRequest struct {
 }
 
 // UpdateEventTypeRequest represents the request body for updating an event type
+// All fields are optional; only provided fields will be updated
 type UpdateEventTypeRequest struct {
-	Name            *string `json:"name,omitempty" binding:"omitempty,min=1,max=100"`
-	Description     *string `json:"description,omitempty" binding:"omitempty,min=1,max=500"`
-	DurationMinutes *int    `json:"durationMinutes,omitempty" binding:"omitempty,min=5,max=1440"`
+	Name            *string `json:"name,omitempty"`
+	Description     *string `json:"description,omitempty"`
+	DurationMinutes *int    `json:"durationMinutes,omitempty"`
 	IsActive        *bool   `json:"isActive,omitempty"`
 }
