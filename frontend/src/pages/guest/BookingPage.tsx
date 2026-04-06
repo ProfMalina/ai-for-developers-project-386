@@ -20,10 +20,14 @@ import { notifications } from '@mantine/notifications';
 import { IconClock, IconCalendarEvent, IconUser, IconMail, IconCheck } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import { guestApi } from '../../api/client';
 import { ApiValidationError, ApiError } from '../../api/client';
 import type { EventType, TimeSlot, CreateBookingRequest } from '../../types/api';
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
 dayjs.locale('ru');
 
 export function BookingPage() {
@@ -269,7 +273,7 @@ export function BookingPage() {
                   size="md"
                   leftSection={<IconClock size={16} />}
                 >
-                  {dayjs(slot.startTime).format('HH:mm')}
+                  {dayjs.utc(slot.startTime).local().format('HH:mm')}
                 </Button>
               ))}
             </Group>
