@@ -13,6 +13,7 @@ import (
 type TimeSlotService struct {
 	repo       *repositories.TimeSlotRepository
 	configRepo *repositories.SlotGenerationConfigRepository
+	ownerRepo  *repositories.OwnerRepository
 }
 
 // NewTimeSlotService creates a new time slot service
@@ -20,6 +21,7 @@ func NewTimeSlotService() *TimeSlotService {
 	return &TimeSlotService{
 		repo:       repositories.NewTimeSlotRepository(),
 		configRepo: repositories.NewSlotGenerationConfigRepository(),
+		ownerRepo:  repositories.NewOwnerRepository(),
 	}
 }
 
@@ -79,6 +81,25 @@ func (s *TimeSlotService) GetAvailableSlots(ctx context.Context, ownerID string,
 
 // GenerateSlots auto-generates time slots based on configuration
 func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID string, req models.SlotGenerationRequest) (*models.SlotGenerationResult, error) {
+	// Determine timezone: prefer request timezone, fallback to owner's timezone
+	loc := time.UTC
+	timezoneName := "UTC"
+
+	if req.Timezone != nil && *req.Timezone != "" {
+		timezoneName = *req.Timezone
+		if l, err := time.LoadLocation(timezoneName); err == nil {
+			loc = l
+		}
+	} else {
+		// Fallback to owner's timezone from database
+		owner, err := s.ownerRepo.GetByID(ctx, ownerID)
+		if err == nil && owner.Timezone != "" {
+			timezoneName = owner.Timezone
+			if l, err := time.LoadLocation(owner.Timezone); err == nil {
+				loc = l
+			}
+		}
+	}
 	// Parse dates
 	dateFrom := time.Now().AddDate(0, 0, 1) // tomorrow
 	if req.DateFrom != "" {
@@ -149,12 +170,12 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID string, req
 		}
 
 		if daysMap[isoWeekday] {
-			// Generate slots for this day
+			// Generate slots for this day in the OWNER'S timezone
 			slotStart := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(),
-				workStart.Hour(), workStart.Minute(), 0, 0, time.UTC)
+				workStart.Hour(), workStart.Minute(), 0, 0, loc)
 
 			dayEnd := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(),
-				workEnd.Hour(), workEnd.Minute(), 0, 0, time.UTC)
+				workEnd.Hour(), workEnd.Minute(), 0, 0, loc)
 
 			for slotStart.Before(dayEnd) {
 				slotEnd := slotStart.Add(time.Duration(req.IntervalMinutes) * time.Minute)
@@ -163,11 +184,11 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID string, req
 					break
 				}
 
-				// Create the slot in the database
+				// Create the slot in the database (times are automatically converted to UTC)
 				slot := &models.TimeSlot{
 					OwnerID:     ownerID,
-					StartTime:   slotStart,
-					EndTime:     slotEnd,
+					StartTime:   slotStart.UTC(),
+					EndTime:     slotEnd.UTC(),
 					IsAvailable: true,
 				}
 
