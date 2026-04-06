@@ -132,9 +132,9 @@ func (r *TimeSlotRepository) List(ctx context.Context, eventTypeID string, page,
 }
 
 // GetAvailableSlots retrieves available slots for an event type
-func (r *TimeSlotRepository) GetAvailableSlots(ctx context.Context, eventTypeID string, page, pageSize int) ([]models.TimeSlot, int, error) {
+func (r *TimeSlotRepository) GetAvailableSlots(ctx context.Context, eventTypeID string, page, pageSize int, startTime, endTime *time.Time) ([]models.TimeSlot, int, error) {
 	available := true
-	return r.List(ctx, eventTypeID, page, pageSize, &available, nil, nil)
+	return r.List(ctx, eventTypeID, page, pageSize, &available, startTime, endTime)
 }
 
 // MarkAsUnavailable marks a slot as unavailable (booked)

@@ -75,6 +75,11 @@ func (h *TimeSlotHandler) GenerateSlots(c *gin.Context) {
 		return
 	}
 
+	// Set eventTypeId from URL path if not provided in request body
+	if req.EventTypeID == "" {
+		req.EventTypeID = eventTypeID
+	}
+
 	// Validate days of week
 	if len(req.DaysOfWeek) < 1 || len(req.DaysOfWeek) > 7 {
 		BadRequest(c, "days_of_week must contain 1-7 items")
@@ -86,8 +91,6 @@ func (h *TimeSlotHandler) GenerateSlots(c *gin.Context) {
 		BadRequest(c, "Failed to generate slots: "+err.Error())
 		return
 	}
-
-	_ = eventTypeID // Use eventTypeID in actual implementation
 
 	SuccessResponse(c, http.StatusCreated, result)
 }

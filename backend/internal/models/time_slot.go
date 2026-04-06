@@ -43,9 +43,11 @@ type SlotGenerationRequest struct {
 	DateFrom          string  `json:"dateFrom" binding:"omitempty,datetime=2006-01-02"`
 	DateTo            string  `json:"dateTo" binding:"omitempty,datetime=2006-01-02"`
 	Timezone          *string `json:"timezone,omitempty"`
+	EventTypeID       string  `json:"eventTypeId" binding:"required,uuid"`
 }
 
 // SlotGenerationResult represents the response from slot generation
 type SlotGenerationResult struct {
-	SlotsCreated int `json:"slotsCreated"`
+	SlotsCreated   int      `json:"slotsCreated"`
+	CreatedSlotIDs []string `json:"createdSlotIds"`
 }

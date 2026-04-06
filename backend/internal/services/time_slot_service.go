@@ -56,7 +56,7 @@ func (s *TimeSlotService) List(ctx context.Context, eventTypeID string, page, pa
 }
 
 // GetAvailableSlots retrieves available slots for an event type
-func (s *TimeSlotService) GetAvailableSlots(ctx context.Context, eventTypeID string, page, pageSize int) (*models.PaginatedResponse[models.TimeSlot], error) {
+func (s *TimeSlotService) GetAvailableSlots(ctx context.Context, eventTypeID string, page, pageSize int, startTime, endTime *time.Time) (*models.PaginatedResponse[models.TimeSlot], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -64,7 +64,7 @@ func (s *TimeSlotService) GetAvailableSlots(ctx context.Context, eventTypeID str
 		pageSize = 20
 	}
 
-	items, totalItems, err := s.repo.GetAvailableSlots(ctx, eventTypeID, page, pageSize)
+	items, totalItems, err := s.repo.GetAvailableSlots(ctx, eventTypeID, page, pageSize, startTime, endTime)
 	if err != nil {
 		return nil, err
 	}
@@ -134,6 +134,7 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID string, req
 	}
 
 	slotsCreated := 0
+	var createdSlotIDs []string
 
 	// Calculate slots for each day
 	currentDate := dateFrom
@@ -152,16 +153,29 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID string, req
 			slotStart := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(),
 				workStart.Hour(), workStart.Minute(), 0, 0, time.UTC)
 
-			for slotStart.Before(workEnd.AddDate(0, 0, 0)) {
+			dayEnd := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(),
+				workEnd.Hour(), workEnd.Minute(), 0, 0, time.UTC)
+
+			for slotStart.Before(dayEnd) {
 				slotEnd := slotStart.Add(time.Duration(req.IntervalMinutes) * time.Minute)
 
-				if slotEnd.After(time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(),
-					workEnd.Hour(), workEnd.Minute(), 0, 0, time.UTC)) {
+				if slotEnd.After(dayEnd) {
 					break
 				}
 
-				// In a real implementation, we'd create the slot in the database
-				// For now, just count it
+				// Create the slot in the database
+				slot := &models.TimeSlot{
+					EventTypeID:   req.EventTypeID,
+					StartTime:     slotStart,
+					EndTime:       slotEnd,
+					IsAvailable:   true,
+				}
+
+				if err := s.repo.Create(ctx, slot); err != nil {
+					return nil, fmt.Errorf("failed to create slot at %s: %w", slotStart.Format(time.RFC3339), err)
+				}
+
+				createdSlotIDs = append(createdSlotIDs, slot.ID)
 				slotsCreated++
 
 				slotStart = slotEnd
@@ -172,6 +186,7 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID string, req
 	}
 
 	return &models.SlotGenerationResult{
-		SlotsCreated: slotsCreated,
+		SlotsCreated:  slotsCreated,
+		CreatedSlotIDs: createdSlotIDs,
 	}, nil
 }

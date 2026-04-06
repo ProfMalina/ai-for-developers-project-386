@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/db"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/services"
@@ -67,7 +68,20 @@ func (h *PublicEventTypeHandler) GetSlots(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
 
-	result, err := h.slotService.GetAvailableSlots(c.Request.Context(), eventTypeID, page, pageSize)
+	// Parse optional dateFrom and dateTo query parameters
+	var startTime, endTime *time.Time
+	if dateFrom := c.Query("dateFrom"); dateFrom != "" {
+		if t, err := time.Parse(time.RFC3339, dateFrom); err == nil {
+			startTime = &t
+		}
+	}
+	if dateTo := c.Query("dateTo"); dateTo != "" {
+		if t, err := time.Parse(time.RFC3339, dateTo); err == nil {
+			endTime = &t
+		}
+	}
+
+	result, err := h.slotService.GetAvailableSlots(c.Request.Context(), eventTypeID, page, pageSize, startTime, endTime)
 	if err != nil {
 		BadRequest(c, "Failed to get available slots: "+err.Error())
 		return
