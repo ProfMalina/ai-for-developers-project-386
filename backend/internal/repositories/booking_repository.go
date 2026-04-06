@@ -1,0 +1,270 @@
+package repositories
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/db"
+	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/models"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+)
+
+// BookingRepository handles database operations for bookings
+type BookingRepository struct{}
+
+// NewBookingRepository creates a new booking repository
+func NewBookingRepository() *BookingRepository {
+	return &BookingRepository{}
+}
+
+// Create creates a new booking
+func (r *BookingRepository) Create(ctx context.Context, booking *models.Booking) error {
+	query := `
+		INSERT INTO bookings (id, event_type_id, slot_id, guest_name, guest_email, timezone, start_time, end_time, status, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+		RETURNING id, created_at
+	`
+
+	if booking.ID == "" {
+		booking.ID = uuid.New().String()
+	}
+
+	if booking.Status == "" {
+		booking.Status = "confirmed"
+	}
+
+	err := db.Pool.QueryRow(ctx, query, booking.ID, booking.EventTypeID, booking.SlotID,
+		booking.GuestName, booking.GuestEmail, booking.Timezone, booking.StartTime, booking.EndTime, booking.Status).
+		Scan(&booking.ID, &booking.CreatedAt)
+	if err != nil {
+		return fmt.Errorf("failed to create booking: %w", err)
+	}
+
+	return nil
+}
+
+// GetByID retrieves a booking by ID
+func (r *BookingRepository) GetByID(ctx context.Context, id string) (*models.Booking, error) {
+	query := `
+		SELECT id, event_type_id, slot_id, guest_name, guest_email, timezone, start_time, end_time, status, created_at
+		FROM bookings WHERE id = $1
+	`
+
+	booking := &models.Booking{}
+	err := db.Pool.QueryRow(ctx, query, id).Scan(
+		&booking.ID, &booking.EventTypeID, &booking.SlotID, &booking.GuestName,
+		&booking.GuestEmail, &booking.Timezone, &booking.StartTime, &booking.EndTime,
+		&booking.Status, &booking.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("booking not found")
+		}
+		return nil, fmt.Errorf("failed to get booking: %w", err)
+	}
+
+	return booking, nil
+}
+
+// List retrieves a paginated list of bookings with filters and sorting
+func (r *BookingRepository) List(ctx context.Context, page, pageSize int, sortBy, sortOrder string, status *string) ([]models.Booking, int, error) {
+	if sortBy == "" {
+		sortBy = "created_at"
+	}
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+
+	allowedSortFields := map[string]bool{
+		"created_at": true, "start_time": true, "guest_name": true, "status": true,
+	}
+	if !allowedSortFields[sortBy] {
+		sortBy = "created_at"
+	}
+	if sortOrder != "asc" && sortOrder != "desc" {
+		sortOrder = "desc"
+	}
+
+	offset := (page - 1) * pageSize
+
+	query := `SELECT id, event_type_id, slot_id, guest_name, guest_email, timezone, start_time, end_time, status, created_at FROM bookings WHERE 1=1`
+	countQuery := `SELECT COUNT(*) FROM bookings WHERE 1=1`
+	args := []interface{}{}
+	argIdx := 1
+
+	if status != nil {
+		query += fmt.Sprintf(" AND status = $%d", argIdx)
+		countQuery += fmt.Sprintf(" AND status = $%d", argIdx)
+		args = append(args, *status)
+		argIdx++
+	}
+
+	// Count total items
+	var totalItems int
+	err := db.Pool.QueryRow(ctx, countQuery, args...).Scan(&totalItems)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count bookings: %w", err)
+	}
+
+	// Add pagination
+	query += fmt.Sprintf(" ORDER BY %s %s LIMIT $%d OFFSET $%d", sortBy, sortOrder, argIdx, argIdx+1)
+	args = append(args, pageSize, offset)
+
+	rows, err := db.Pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list bookings: %w", err)
+	}
+	defer rows.Close()
+
+	var bookings []models.Booking
+	for rows.Next() {
+		var booking models.Booking
+		err := rows.Scan(&booking.ID, &booking.EventTypeID, &booking.SlotID, &booking.GuestName,
+			&booking.GuestEmail, &booking.Timezone, &booking.StartTime, &booking.EndTime,
+			&booking.Status, &booking.CreatedAt)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to scan booking: %w", err)
+		}
+		bookings = append(bookings, booking)
+	}
+
+	if bookings == nil {
+		bookings = []models.Booking{}
+	}
+
+	return bookings, totalItems, nil
+}
+
+// CheckOverlap checks if a new booking would overlap with existing bookings
+func (r *BookingRepository) CheckOverlap(ctx context.Context, startTime, endTime time.Time) (bool, error) {
+	query := `
+		SELECT EXISTS(
+			SELECT 1 FROM bookings
+			WHERE status != 'cancelled'
+			AND $1 < end_time
+			AND $2 > start_time
+		)
+	`
+
+	var overlaps bool
+	err := db.Pool.QueryRow(ctx, query, startTime, endTime).Scan(&overlaps)
+	if err != nil {
+		return false, fmt.Errorf("failed to check booking overlap: %w", err)
+	}
+
+	return overlaps, nil
+}
+
+// Update updates a booking
+func (r *BookingRepository) Update(ctx context.Context, booking *models.Booking) error {
+	query := `
+		UPDATE bookings
+		SET guest_name = $2, guest_email = $3, timezone = $4, start_time = $5, end_time = $6, status = $7
+		WHERE id = $1
+	`
+
+	result, err := db.Pool.Exec(ctx, query, booking.ID, booking.GuestName, booking.GuestEmail,
+		booking.Timezone, booking.StartTime, booking.EndTime, booking.Status)
+	if err != nil {
+		if strings.Contains(err.Error(), "overlaps") {
+			return fmt.Errorf("booking overlaps with existing booking")
+		}
+		return fmt.Errorf("failed to update booking: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("booking not found")
+	}
+
+	return nil
+}
+
+// Patch partially updates a booking
+func (r *BookingRepository) Patch(ctx context.Context, id string, req models.UpdateBookingRequest) (*models.Booking, error) {
+	booking, err := r.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	setClauses := []string{}
+	args := []interface{}{}
+	argIdx := 1
+
+	if req.GuestName != nil {
+		setClauses = append(setClauses, fmt.Sprintf("guest_name = $%d", argIdx))
+		args = append(args, *req.GuestName)
+		argIdx++
+	}
+	if req.GuestEmail != nil {
+		setClauses = append(setClauses, fmt.Sprintf("guest_email = $%d", argIdx))
+		args = append(args, *req.GuestEmail)
+		argIdx++
+	}
+	if req.Timezone != nil {
+		setClauses = append(setClauses, fmt.Sprintf("timezone = $%d", argIdx))
+		args = append(args, *req.Timezone)
+		argIdx++
+	}
+
+	if len(setClauses) == 0 {
+		return booking, nil
+	}
+
+	args = append(args, id)
+
+	query := fmt.Sprintf("UPDATE bookings SET %s WHERE id = $%d RETURNING id, event_type_id, slot_id, guest_name, guest_email, timezone, start_time, end_time, status, created_at",
+		strings.Join(setClauses, ", "), argIdx+1)
+
+	err = db.Pool.QueryRow(ctx, query, args...).Scan(
+		&booking.ID, &booking.EventTypeID, &booking.SlotID, &booking.GuestName,
+		&booking.GuestEmail, &booking.Timezone, &booking.StartTime, &booking.EndTime,
+		&booking.Status, &booking.CreatedAt,
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), "overlaps") {
+			return nil, fmt.Errorf("booking overlaps with existing booking")
+		}
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("booking not found")
+		}
+		return nil, fmt.Errorf("failed to patch booking: %w", err)
+	}
+
+	return booking, nil
+}
+
+// Cancel cancels a booking
+func (r *BookingRepository) Cancel(ctx context.Context, id string) error {
+	query := `UPDATE bookings SET status = 'cancelled' WHERE id = $1`
+
+	result, err := db.Pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to cancel booking: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("booking not found")
+	}
+
+	return nil
+}
+
+// Delete deletes a booking
+func (r *BookingRepository) Delete(ctx context.Context, id string) error {
+	query := `DELETE FROM bookings WHERE id = $1`
+
+	result, err := db.Pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete booking: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("booking not found")
+	}
+
+	return nil
+}
