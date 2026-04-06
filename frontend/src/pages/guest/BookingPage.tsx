@@ -21,7 +21,7 @@ import { IconClock, IconCalendarEvent, IconUser, IconMail, IconCheck } from '@ta
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import { guestApi } from '../../api/client';
-import { ApiValidationError } from '../../api/client';
+import { ApiValidationError, ApiError } from '../../api/client';
 import type { EventType, TimeSlot, CreateBookingRequest } from '../../types/api';
 
 dayjs.locale('ru');
@@ -174,6 +174,12 @@ export function BookingPage() {
         notifications.show({
           title: 'Ошибка валидации',
           message: messages,
+          color: 'red',
+        });
+      } else if (error instanceof ApiError && error.message) {
+        notifications.show({
+          title: 'Ошибка',
+          message: error.message,
           color: 'red',
         });
       } else {
