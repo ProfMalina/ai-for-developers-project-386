@@ -61,9 +61,9 @@ func (h *PublicEventTypeHandler) GetByID(c *gin.Context) {
 	SuccessResponse(c, http.StatusOK, et)
 }
 
-// GetSlots handles GET /api/public/event-types/{id}/slots
+// GetSlots handles GET /api/public/slots
 func (h *PublicEventTypeHandler) GetSlots(c *gin.Context) {
-	eventTypeID := c.Param("id")
+	ownerID := db.DefaultOwnerID
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
@@ -81,7 +81,7 @@ func (h *PublicEventTypeHandler) GetSlots(c *gin.Context) {
 		}
 	}
 
-	result, err := h.slotService.GetAvailableSlots(c.Request.Context(), eventTypeID, page, pageSize, startTime, endTime)
+	result, err := h.slotService.GetAvailableSlots(c.Request.Context(), ownerID, page, pageSize, startTime, endTime)
 	if err != nil {
 		BadRequest(c, "Failed to get available slots: "+err.Error())
 		return

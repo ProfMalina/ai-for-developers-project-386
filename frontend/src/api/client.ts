@@ -134,7 +134,6 @@ export const ownerApi = {
   },
 
   async generateSlots(
-    eventTypeId: string,
     data: {
       workingHoursStart: string;
       workingHoursEnd: string;
@@ -146,7 +145,7 @@ export const ownerApi = {
     }
   ): Promise<{ slotsCreated: number; createdSlotIds: string[] }> {
     const response = await apiClient.post<{ slotsCreated: number; createdSlotIds: string[] }>(
-      `/api/event-types/${eventTypeId}/slots/generate`,
+      '/api/slots/generate',
       data
     );
     return response.data;
@@ -169,7 +168,6 @@ export const guestApi = {
   },
 
   async getAvailableSlots(
-    eventTypeId: string,
     params?: {
       dateFrom?: string;
       dateTo?: string;
@@ -179,7 +177,7 @@ export const guestApi = {
     }
   ): Promise<PaginatedResponse<TimeSlot>> {
     const response = await apiClient.get<PaginatedResponse<TimeSlot>>(
-      `/api/public/event-types/${eventTypeId}/slots`,
+      '/api/public/slots',
       { params }
     );
     return response.data;

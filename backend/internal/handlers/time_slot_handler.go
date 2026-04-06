@@ -25,7 +25,11 @@ func NewTimeSlotHandler() *TimeSlotHandler {
 
 // List handles GET /api/slots
 func (h *TimeSlotHandler) List(c *gin.Context) {
-	eventTypeID := c.Query("eventTypeId")
+	ownerID := c.GetString("ownerID")
+	if ownerID == "" {
+		ownerID = db.DefaultOwnerID
+	}
+
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
 
@@ -51,7 +55,7 @@ func (h *TimeSlotHandler) List(c *gin.Context) {
 		}
 	}
 
-	result, err := h.service.List(c.Request.Context(), eventTypeID, page, pageSize, available, startTime, endTime)
+	result, err := h.service.List(c.Request.Context(), ownerID, page, pageSize, available, startTime, endTime)
 	if err != nil {
 		BadRequest(c, "Failed to list time slots: "+err.Error())
 		return
@@ -60,24 +64,17 @@ func (h *TimeSlotHandler) List(c *gin.Context) {
 	SuccessResponse(c, http.StatusOK, result)
 }
 
-// GenerateSlots handles POST /api/event-types/{id}/slots/generate
+// GenerateSlots handles POST /api/slots/generate
 func (h *TimeSlotHandler) GenerateSlots(c *gin.Context) {
 	ownerID := c.GetString("ownerID")
 	if ownerID == "" {
 		ownerID = db.DefaultOwnerID
 	}
 
-	eventTypeID := c.Param("id")
-
 	var req models.SlotGenerationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		BadRequest(c, "Invalid request body: "+err.Error())
 		return
-	}
-
-	// Set eventTypeId from URL path if not provided in request body
-	if req.EventTypeID == "" {
-		req.EventTypeID = eventTypeID
 	}
 
 	// Validate days of week

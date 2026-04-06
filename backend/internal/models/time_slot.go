@@ -5,7 +5,7 @@ import "time"
 // TimeSlot represents an available time slot for booking
 type TimeSlot struct {
 	ID          string    `json:"id"`
-	EventTypeID string    `json:"eventTypeId"`
+	OwnerID     string    `json:"ownerId"`
 	StartTime   time.Time `json:"startTime"`
 	EndTime     time.Time `json:"endTime"`
 	IsAvailable bool      `json:"isAvailable"`
@@ -43,7 +43,6 @@ type SlotGenerationRequest struct {
 	DateFrom          string  `json:"dateFrom" binding:"omitempty,datetime=2006-01-02"`
 	DateTo            string  `json:"dateTo" binding:"omitempty,datetime=2006-01-02"`
 	Timezone          *string `json:"timezone,omitempty"`
-	EventTypeID       string  `json:"eventTypeId" binding:"required,uuid"`
 }
 
 // SlotGenerationResult represents the response from slot generation

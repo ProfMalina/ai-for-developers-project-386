@@ -44,9 +44,14 @@ export function BookingPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const fetchEventType = useCallback(async () => {
+    if (!eventTypeId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const data = await guestApi.getPublicEventType(eventTypeId!);
+      const data = await guestApi.getPublicEventType(eventTypeId);
       setEventType(data);
       document.title = `Бронирование: ${data.name}`;
     } catch {
@@ -62,20 +67,17 @@ export function BookingPage() {
   }, [eventTypeId, navigate]);
 
   useEffect(() => {
-    if (!eventTypeId) return;
     fetchEventType();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchEventType]);
 
   const fetchAvailableSlots = async (date: Date) => {
-    if (!eventTypeId) return;
-
     try {
       setFetchingSlots(true);
       const dateFrom = dayjs(date).startOf('day').toISOString();
       const dateTo = dayjs(date).endOf('day').toISOString();
 
-      const response = await guestApi.getAvailableSlots(eventTypeId, {
+      const response = await guestApi.getAvailableSlots({
         dateFrom,
         dateTo,
         pageSize: 100,
@@ -112,7 +114,17 @@ export function BookingPage() {
   };
 
   const handleSlotSelect = (slot: TimeSlot) => {
-    setSelectedSlot(slot);
+    // Calculate end time based on event type duration
+    if (eventType) {
+      const start = dayjs(slot.startTime);
+      const end = start.add(eventType.durationMinutes, 'minute');
+      setSelectedSlot({
+        ...slot,
+        endTime: end.toISOString(),
+      });
+    } else {
+      setSelectedSlot(slot);
+    }
     setActiveStep(2);
   };
 

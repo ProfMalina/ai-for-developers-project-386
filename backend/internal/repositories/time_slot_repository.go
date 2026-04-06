@@ -23,7 +23,7 @@ func NewTimeSlotRepository() *TimeSlotRepository {
 // Create creates a new time slot
 func (r *TimeSlotRepository) Create(ctx context.Context, slot *models.TimeSlot) error {
 	query := `
-		INSERT INTO time_slots (id, event_type_id, start_time, end_time, is_available, created_at)
+		INSERT INTO time_slots (id, owner_id, start_time, end_time, is_available, created_at)
 		VALUES ($1, $2, $3, $4, $5, NOW())
 		RETURNING id, created_at
 	`
@@ -32,7 +32,7 @@ func (r *TimeSlotRepository) Create(ctx context.Context, slot *models.TimeSlot) 
 		slot.ID = uuid.New().String()
 	}
 
-	err := db.Pool.QueryRow(ctx, query, slot.ID, slot.EventTypeID, slot.StartTime, slot.EndTime, slot.IsAvailable).
+	err := db.Pool.QueryRow(ctx, query, slot.ID, slot.OwnerID, slot.StartTime, slot.EndTime, slot.IsAvailable).
 		Scan(&slot.ID, &slot.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("failed to create time slot: %w", err)
@@ -43,11 +43,11 @@ func (r *TimeSlotRepository) Create(ctx context.Context, slot *models.TimeSlot) 
 
 // GetByID retrieves a time slot by ID
 func (r *TimeSlotRepository) GetByID(ctx context.Context, id string) (*models.TimeSlot, error) {
-	query := `SELECT id, event_type_id, start_time, end_time, is_available, created_at FROM time_slots WHERE id = $1`
+	query := `SELECT id, owner_id, start_time, end_time, is_available, created_at FROM time_slots WHERE id = $1`
 
 	slot := &models.TimeSlot{}
 	err := db.Pool.QueryRow(ctx, query, id).Scan(
-		&slot.ID, &slot.EventTypeID, &slot.StartTime, &slot.EndTime, &slot.IsAvailable, &slot.CreatedAt,
+		&slot.ID, &slot.OwnerID, &slot.StartTime, &slot.EndTime, &slot.IsAvailable, &slot.CreatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -64,14 +64,14 @@ func (r *TimeSlotRepository) List(ctx context.Context, eventTypeID string, page,
 	offset := (page - 1) * pageSize
 
 	// Build query dynamically based on filters
-	query := `SELECT id, event_type_id, start_time, end_time, is_available, created_at FROM time_slots WHERE 1=1`
+	query := `SELECT id, owner_id, start_time, end_time, is_available, created_at FROM time_slots WHERE 1=1`
 	countQuery := `SELECT COUNT(*) FROM time_slots WHERE 1=1`
 	args := []interface{}{}
 	argIdx := 1
 
 	if eventTypeID != "" {
-		query += fmt.Sprintf(" AND event_type_id = $%d", argIdx)
-		countQuery += fmt.Sprintf(" AND event_type_id = $%d", argIdx)
+		query += fmt.Sprintf(" AND owner_id = $%d", argIdx)
+		countQuery += fmt.Sprintf(" AND owner_id = $%d", argIdx)
 		args = append(args, eventTypeID)
 		argIdx++
 	}
@@ -117,7 +117,7 @@ func (r *TimeSlotRepository) List(ctx context.Context, eventTypeID string, page,
 	var slots []models.TimeSlot
 	for rows.Next() {
 		var slot models.TimeSlot
-		err := rows.Scan(&slot.ID, &slot.EventTypeID, &slot.StartTime, &slot.EndTime, &slot.IsAvailable, &slot.CreatedAt)
+		err := rows.Scan(&slot.ID, &slot.OwnerID, &slot.StartTime, &slot.EndTime, &slot.IsAvailable, &slot.CreatedAt)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to scan time slot: %w", err)
 		}
@@ -169,9 +169,9 @@ func (r *TimeSlotRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// DeleteByEventTypeID deletes all time slots for an event type
-func (r *TimeSlotRepository) DeleteByEventTypeID(ctx context.Context, eventTypeID string) error {
-	query := `DELETE FROM time_slots WHERE event_type_id = $1`
+// DeleteByOwnerID deletes all time slots for an event type
+func (r *TimeSlotRepository) DeleteByOwnerID(ctx context.Context, eventTypeID string) error {
+	query := `DELETE FROM time_slots WHERE owner_id = $1`
 
 	_, err := db.Pool.Exec(ctx, query, eventTypeID)
 	if err != nil {

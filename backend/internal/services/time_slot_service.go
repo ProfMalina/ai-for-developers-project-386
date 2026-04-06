@@ -34,7 +34,7 @@ func (s *TimeSlotService) GetByID(ctx context.Context, id string) (*models.TimeS
 }
 
 // List retrieves a paginated list of time slots
-func (s *TimeSlotService) List(ctx context.Context, eventTypeID string, page, pageSize int, available *bool, startTime, endTime *time.Time) (*models.PaginatedResponse[models.TimeSlot], error) {
+func (s *TimeSlotService) List(ctx context.Context, ownerID string, page, pageSize int, available *bool, startTime, endTime *time.Time) (*models.PaginatedResponse[models.TimeSlot], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -42,7 +42,7 @@ func (s *TimeSlotService) List(ctx context.Context, eventTypeID string, page, pa
 		pageSize = 20
 	}
 
-	items, totalItems, err := s.repo.List(ctx, eventTypeID, page, pageSize, available, startTime, endTime)
+	items, totalItems, err := s.repo.List(ctx, ownerID, page, pageSize, available, startTime, endTime)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (s *TimeSlotService) List(ctx context.Context, eventTypeID string, page, pa
 }
 
 // GetAvailableSlots retrieves available slots for an event type
-func (s *TimeSlotService) GetAvailableSlots(ctx context.Context, eventTypeID string, page, pageSize int, startTime, endTime *time.Time) (*models.PaginatedResponse[models.TimeSlot], error) {
+func (s *TimeSlotService) GetAvailableSlots(ctx context.Context, ownerID string, page, pageSize int, startTime, endTime *time.Time) (*models.PaginatedResponse[models.TimeSlot], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -64,7 +64,7 @@ func (s *TimeSlotService) GetAvailableSlots(ctx context.Context, eventTypeID str
 		pageSize = 20
 	}
 
-	items, totalItems, err := s.repo.GetAvailableSlots(ctx, eventTypeID, page, pageSize, startTime, endTime)
+	items, totalItems, err := s.repo.GetAvailableSlots(ctx, ownerID, page, pageSize, startTime, endTime)
 	if err != nil {
 		return nil, err
 	}
@@ -165,10 +165,10 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID string, req
 
 				// Create the slot in the database
 				slot := &models.TimeSlot{
-					EventTypeID:   req.EventTypeID,
-					StartTime:     slotStart,
-					EndTime:       slotEnd,
-					IsAvailable:   true,
+					OwnerID:     ownerID,
+					StartTime:   slotStart,
+					EndTime:     slotEnd,
+					IsAvailable: true,
 				}
 
 				if err := s.repo.Create(ctx, slot); err != nil {
