@@ -87,8 +87,11 @@ export function BookingPage() {
         pageSize: 100,
       });
 
-      setAvailableSlots(response.items);
-      if (response.items.length === 0) {
+      // Filter out slots that have already started or passed (double-check on frontend)
+      const now = dayjs();
+      const futureSlots = response.items.filter((slot) => dayjs.utc(slot.startTime).local().isAfter(now));
+      setAvailableSlots(futureSlots);
+      if (futureSlots.length === 0) {
         notifications.show({
           title: 'Нет слотов',
           message: 'На выбранную дату нет доступных слотов',

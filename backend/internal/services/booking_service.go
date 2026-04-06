@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/models"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
@@ -53,6 +54,11 @@ func (s *BookingService) Create(ctx context.Context, req models.CreateBookingReq
 
 		if !slot.IsAvailable {
 			return nil, fmt.Errorf("time slot is already booked")
+		}
+
+		// Prevent booking slots that have already started or passed
+		if slot.StartTime.Before(time.Now()) {
+			return nil, fmt.Errorf("cannot book a time slot that has already started or passed")
 		}
 
 		booking.StartTime = slot.StartTime

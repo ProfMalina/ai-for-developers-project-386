@@ -66,15 +66,26 @@ func (s *TimeSlotService) GetAvailableSlots(ctx context.Context, ownerID string,
 		pageSize = 20
 	}
 
-	items, totalItems, err := s.repo.GetAvailableSlots(ctx, ownerID, page, pageSize, startTime, endTime)
+	items, _, err := s.repo.GetAvailableSlots(ctx, ownerID, page, pageSize, startTime, endTime)
 	if err != nil {
 		return nil, err
 	}
 
-	pagination := CalculatePagination(page, pageSize, totalItems)
+	// Filter out slots that have already started or passed
+	now := time.Now()
+	var filteredItems []models.TimeSlot
+	for _, slot := range items {
+		if slot.StartTime.After(now) {
+			filteredItems = append(filteredItems, slot)
+		}
+	}
+
+	// Recalculate pagination based on filtered results
+	totalFiltered := len(filteredItems)
+	pagination := CalculatePagination(page, pageSize, totalFiltered)
 
 	return &models.PaginatedResponse[models.TimeSlot]{
-		Items:      items,
+		Items:      filteredItems,
 		Pagination: pagination,
 	}, nil
 }
@@ -91,7 +102,12 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID string, req
 	if owner.Timezone != "" {
 		if l, err := time.LoadLocation(owner.Timezone); err == nil {
 			loc = l
+			fmt.Printf("Using owner timezone: %s\n", owner.Timezone)
+		} else {
+			fmt.Printf("Failed to load timezone %s: %v, falling back to UTC\n", owner.Timezone, err)
 		}
+	} else {
+		fmt.Println("Owner has no timezone, using UTC")
 	}
 	// Parse dates
 	dateFrom := time.Now().AddDate(0, 0, 1) // tomorrow
