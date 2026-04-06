@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -58,18 +61,35 @@ func RunMigrations(ctx context.Context, migrationsDir string) error {
 	}
 
 	// Read migration files
-	upFile := migrationsDir + "/001_initial_schema.up.sql"
-	sql, err := os.ReadFile(upFile)
+	files, err := filepath.Glob(filepath.Join(migrationsDir, "*.up.sql"))
 	if err != nil {
-		return fmt.Errorf("unable to read migration file: %w", err)
+		return fmt.Errorf("unable to find migration files: %w", err)
 	}
 
-	// Execute migration
-	_, err = Pool.Exec(ctx, string(sql))
-	if err != nil {
-		// Check if tables already exist
-		log.Printf("Migration may have already been applied or failed: %v", err)
-		// Don't return error as tables may already exist
+	sort.Strings(files)
+
+	for _, file := range files {
+		name := filepath.Base(file)
+		log.Printf("Running migration: %s", name)
+
+		sql, err := os.ReadFile(file)
+		if err != nil {
+			return fmt.Errorf("unable to read migration file %s: %w", name, err)
+		}
+
+		_, err = Pool.Exec(ctx, string(sql))
+		if err != nil {
+			// Check if it's a "already exists" error (safe to skip)
+			if strings.Contains(err.Error(), "already exists") ||
+				strings.Contains(err.Error(), "duplicate key") {
+				log.Printf("Migration %s may have already been applied, skipping", name)
+				continue
+			}
+			log.Printf("Warning: Migration %s failed: %v", name, err)
+			// Don't return error as migrations may have partially applied
+		} else {
+			log.Printf("Migration %s applied successfully", name)
+		}
 	}
 
 	log.Println("Database migrations completed")

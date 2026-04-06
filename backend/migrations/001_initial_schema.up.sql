@@ -4,7 +4,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Owners table
-CREATE TABLE owners (
+CREATE TABLE IF NOT EXISTS owners (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -14,7 +14,7 @@ CREATE TABLE owners (
 );
 
 -- Event types table
-CREATE TABLE event_types (
+CREATE TABLE IF NOT EXISTS event_types (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     owner_id UUID NOT NULL REFERENCES owners(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
@@ -25,10 +25,10 @@ CREATE TABLE event_types (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Time slots table
-CREATE TABLE time_slots (
+-- Time slots table (updated: owner_id instead of event_type_id)
+CREATE TABLE IF NOT EXISTS time_slots (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    event_type_id UUID NOT NULL REFERENCES event_types(id) ON DELETE CASCADE,
+    owner_id UUID NOT NULL REFERENCES owners(id) ON DELETE CASCADE,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
     is_available BOOLEAN NOT NULL DEFAULT true,
@@ -37,7 +37,7 @@ CREATE TABLE time_slots (
 );
 
 -- Bookings table
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_type_id UUID NOT NULL REFERENCES event_types(id) ON DELETE CASCADE,
     slot_id UUID REFERENCES time_slots(id) ON DELETE SET NULL,
@@ -52,7 +52,7 @@ CREATE TABLE bookings (
 );
 
 -- Create index for overlapping booking check
-CREATE INDEX idx_bookings_time_range ON bookings (start_time, end_time);
+CREATE INDEX IF NOT EXISTS idx_bookings_time_range ON bookings (start_time, end_time);
 
 -- Create function to prevent overlapping bookings
 CREATE OR REPLACE FUNCTION check_booking_overlap() RETURNS TRIGGER AS $$
@@ -71,13 +71,14 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger for booking overlap check
+DROP TRIGGER IF EXISTS prevent_booking_overlap ON bookings;
 CREATE TRIGGER prevent_booking_overlap
     BEFORE INSERT OR UPDATE ON bookings
     FOR EACH ROW
     EXECUTE FUNCTION check_booking_overlap();
 
 -- Slot generation configs table
-CREATE TABLE slot_generation_configs (
+CREATE TABLE IF NOT EXISTS slot_generation_configs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     owner_id UUID NOT NULL REFERENCES owners(id) ON DELETE CASCADE UNIQUE,
     working_hours_start TIME NOT NULL,
@@ -94,12 +95,12 @@ CREATE TABLE slot_generation_configs (
 );
 
 -- Create indexes for better query performance
-CREATE INDEX idx_event_types_owner_id ON event_types(owner_id);
-CREATE INDEX idx_time_slots_event_type_id ON time_slots(event_type_id);
-CREATE INDEX idx_time_slots_availability ON time_slots(is_available);
-CREATE INDEX idx_bookings_event_type_id ON bookings(event_type_id);
-CREATE INDEX idx_bookings_status ON bookings(status);
-CREATE INDEX idx_slot_configs_owner_id ON slot_generation_configs(owner_id);
+CREATE INDEX IF NOT EXISTS idx_event_types_owner_id ON event_types(owner_id);
+CREATE INDEX IF NOT EXISTS idx_time_slots_owner_id ON time_slots(owner_id);
+CREATE INDEX IF NOT EXISTS idx_time_slots_availability ON time_slots(is_available);
+CREATE INDEX IF NOT EXISTS idx_bookings_event_type_id ON bookings(event_type_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_slot_configs_owner_id ON slot_generation_configs(owner_id);
 
 -- Insert default owner for development
 INSERT INTO owners (id, name, email, timezone, created_at, updated_at)
