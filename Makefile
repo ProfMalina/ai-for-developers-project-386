@@ -82,5 +82,21 @@ docker-rebuild: ## Stop, rebuild, and start all services
 	docker-compose build --no-cache
 	docker-compose up -d
 
+# Deployment
+SERVER ?= admn@192.168.2.53
+REMOTE_PATH ?= /home/admn/qwen-ai
+
+devdeploy: ## Sync files to server and rebuild docker containers
+	rsync -avz --delete \
+		--exclude='.git' \
+		--exclude='.github' \
+		--exclude='node_modules' \
+		--exclude='tsp-output' \
+		--exclude='*.md' \
+		--exclude='Makefile' \
+		-e ssh \
+		./ $(SERVER):$(REMOTE_PATH)
+	ssh $(SERVER) "cd $(REMOTE_PATH) && docker compose build --no-cache && docker compose up -d"
+
 docker-ps: ## Show status of all services
 	docker-compose ps
