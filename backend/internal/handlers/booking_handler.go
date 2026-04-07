@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
@@ -15,8 +16,12 @@ type BookingHandler struct {
 
 // NewBookingHandler creates a new booking handler
 func NewBookingHandler() *BookingHandler {
+	bookingRepo := repositories.NewBookingRepository()
+	slotRepo := repositories.NewTimeSlotRepository()
+	etRepo := repositories.NewEventTypeRepository()
+
 	return &BookingHandler{
-		service: services.NewBookingService(),
+		service: services.NewBookingService(bookingRepo, slotRepo, etRepo),
 	}
 }
 

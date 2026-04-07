@@ -7,6 +7,7 @@ import (
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/db"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/models"
+	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +20,11 @@ type TimeSlotHandler struct {
 // NewTimeSlotHandler creates a new time slot handler
 func NewTimeSlotHandler() *TimeSlotHandler {
 	return &TimeSlotHandler{
-		service: services.NewTimeSlotService(),
+		service: services.NewTimeSlotService(
+			repositories.NewTimeSlotRepository(),
+			repositories.NewSlotGenerationConfigRepository(),
+			repositories.NewOwnerRepository(),
+		),
 	}
 }
 

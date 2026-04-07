@@ -4,18 +4,17 @@ import (
 	"context"
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/models"
-	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 )
 
 // EventTypeService handles business logic for event types
 type EventTypeService struct {
-	repo *repositories.EventTypeRepository
+	repo EventTypeRepository
 }
 
 // NewEventTypeService creates a new event type service
-func NewEventTypeService() *EventTypeService {
+func NewEventTypeService(repo EventTypeRepository) *EventTypeService {
 	return &EventTypeService{
-		repo: repositories.NewEventTypeRepository(),
+		repo: repo,
 	}
 }
 

@@ -150,7 +150,7 @@ func (r *EventTypeRepository) Patch(ctx context.Context, id string, req models.U
 
 	setClauses := []string{}
 	args := []interface{}{id} // id is always $1
-	argIdx := 2 // start counting from 2 since id is $1
+	argIdx := 2               // start counting from 2 since id is $1
 
 	if req.Name != nil {
 		setClauses = append(setClauses, fmt.Sprintf("name = $%d", argIdx))

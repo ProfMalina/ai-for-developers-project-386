@@ -5,18 +5,17 @@ import (
 	"math"
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/models"
-	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 )
 
 // OwnerService handles business logic for owners
 type OwnerService struct {
-	repo *repositories.OwnerRepository
+	repo OwnerRepository
 }
 
 // NewOwnerService creates a new owner service
-func NewOwnerService() *OwnerService {
+func NewOwnerService(repo OwnerRepository) *OwnerService {
 	return &OwnerService{
-		repo: repositories.NewOwnerRepository(),
+		repo: repo,
 	}
 }
 

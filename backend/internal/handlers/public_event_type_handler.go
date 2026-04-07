@@ -6,21 +6,26 @@ import (
 	"time"
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/db"
+	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
 
 // PublicEventTypeHandler handles HTTP requests for public event types
 type PublicEventTypeHandler struct {
-	etService    *services.EventTypeService
-	slotService  *services.TimeSlotService
+	etService   *services.EventTypeService
+	slotService *services.TimeSlotService
 }
 
 // NewPublicEventTypeHandler creates a new public event type handler
 func NewPublicEventTypeHandler() *PublicEventTypeHandler {
 	return &PublicEventTypeHandler{
-		etService:   services.NewEventTypeService(),
-		slotService: services.NewTimeSlotService(),
+		etService: services.NewEventTypeService(repositories.NewEventTypeRepository()),
+		slotService: services.NewTimeSlotService(
+			repositories.NewTimeSlotRepository(),
+			repositories.NewSlotGenerationConfigRepository(),
+			repositories.NewOwnerRepository(),
+		),
 	}
 }
 

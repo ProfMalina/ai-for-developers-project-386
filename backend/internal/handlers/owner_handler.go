@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/models"
+	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +17,7 @@ type OwnerHandler struct {
 // NewOwnerHandler creates a new owner handler
 func NewOwnerHandler() *OwnerHandler {
 	return &OwnerHandler{
-		service: services.NewOwnerService(),
+		service: services.NewOwnerService(repositories.NewOwnerRepository()),
 	}
 }
 

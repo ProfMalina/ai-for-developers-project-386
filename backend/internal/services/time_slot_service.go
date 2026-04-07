@@ -6,22 +6,21 @@ import (
 	"time"
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/models"
-	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 )
 
 // TimeSlotService handles business logic for time slots
 type TimeSlotService struct {
-	repo       *repositories.TimeSlotRepository
-	configRepo *repositories.SlotGenerationConfigRepository
-	ownerRepo  *repositories.OwnerRepository
+	repo       TimeSlotRepository
+	configRepo SlotGenerationConfigRepository
+	ownerRepo  OwnerRepository
 }
 
 // NewTimeSlotService creates a new time slot service
-func NewTimeSlotService() *TimeSlotService {
+func NewTimeSlotService(repo TimeSlotRepository, configRepo SlotGenerationConfigRepository, ownerRepo OwnerRepository) *TimeSlotService {
 	return &TimeSlotService{
-		repo:       repositories.NewTimeSlotRepository(),
-		configRepo: repositories.NewSlotGenerationConfigRepository(),
-		ownerRepo:  repositories.NewOwnerRepository(),
+		repo:       repo,
+		configRepo: configRepo,
+		ownerRepo:  ownerRepo,
 	}
 }
 
@@ -216,7 +215,7 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID string, req
 	}
 
 	return &models.SlotGenerationResult{
-		SlotsCreated:  slotsCreated,
+		SlotsCreated:   slotsCreated,
 		CreatedSlotIDs: createdSlotIDs,
 	}, nil
 }

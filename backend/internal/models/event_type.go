@@ -4,12 +4,12 @@ import "time"
 
 // EventType represents a type of event that can be booked
 type EventType struct {
-	ID              string `json:"id"`
-	OwnerID         string `json:"ownerId"`
-	Name            string `json:"name"`
-	Description     string `json:"description"`
-	DurationMinutes int    `json:"durationMinutes"`
-	IsActive        bool   `json:"isActive"`
+	ID              string    `json:"id"`
+	OwnerID         string    `json:"ownerId"`
+	Name            string    `json:"name"`
+	Description     string    `json:"description"`
+	DurationMinutes int       `json:"durationMinutes"`
+	IsActive        bool      `json:"isActive"`
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
 }

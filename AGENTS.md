@@ -63,3 +63,5 @@ The application enables a calendar owner to define event types and manage bookin
 ## Current State
 
 **No implementation code exists yet.** The repository contains only project documentation and CI configuration. The next step is to produce a TypeSpec API specification before writing any Go or frontend code.
+
+@SPEC.MD

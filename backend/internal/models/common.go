@@ -18,10 +18,10 @@ type PaginatedResponse[T any] struct {
 
 // ErrorResponse represents an error API response
 type ErrorResponse struct {
-	Error       string        `json:"error"`
-	Message     string        `json:"message"`
-	Details     string        `json:"details,omitempty"`
-	FieldErrors []FieldError  `json:"fieldErrors,omitempty"`
+	Error       string       `json:"error"`
+	Message     string       `json:"message"`
+	Details     string       `json:"details,omitempty"`
+	FieldErrors []FieldError `json:"fieldErrors,omitempty"`
 }
 
 // FieldError represents a single field validation error

@@ -21,17 +21,17 @@ type CreateTimeSlotRequest struct {
 
 // SlotGenerationConfig represents configuration for auto-generating slots
 type SlotGenerationConfig struct {
-	ID                 string    `json:"id"`
-	OwnerID            string    `json:"ownerId"`
-	WorkingHoursStart  string    `json:"workingHoursStart"`
-	WorkingHoursEnd    string    `json:"workingHoursEnd"`
-	IntervalMinutes    int       `json:"intervalMinutes"`
-	DaysOfWeek         []int     `json:"daysOfWeek"`
-	DateFrom           time.Time `json:"dateFrom"`
-	DateTo             time.Time `json:"dateTo"`
-	Timezone           string    `json:"timezone"`
-	CreatedAt          time.Time `json:"createdAt"`
-	UpdatedAt          time.Time `json:"updatedAt"`
+	ID                string    `json:"id"`
+	OwnerID           string    `json:"ownerId"`
+	WorkingHoursStart string    `json:"workingHoursStart"`
+	WorkingHoursEnd   string    `json:"workingHoursEnd"`
+	IntervalMinutes   int       `json:"intervalMinutes"`
+	DaysOfWeek        []int     `json:"daysOfWeek"`
+	DateFrom          time.Time `json:"dateFrom"`
+	DateTo            time.Time `json:"dateTo"`
+	Timezone          string    `json:"timezone"`
+	CreatedAt         time.Time `json:"createdAt"`
+	UpdatedAt         time.Time `json:"updatedAt"`
 }
 
 // SlotGenerationRequest represents the request body for generating slots

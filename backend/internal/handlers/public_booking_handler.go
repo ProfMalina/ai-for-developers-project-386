@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/models"
+	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +17,11 @@ type PublicBookingHandler struct {
 // NewPublicBookingHandler creates a new public booking handler
 func NewPublicBookingHandler() *PublicBookingHandler {
 	return &PublicBookingHandler{
-		service: services.NewBookingService(),
+		service: services.NewBookingService(
+			repositories.NewBookingRepository(),
+			repositories.NewTimeSlotRepository(),
+			repositories.NewEventTypeRepository(),
+		),
 	}
 }
 

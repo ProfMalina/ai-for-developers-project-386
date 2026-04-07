@@ -6,6 +6,7 @@ import (
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/db"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/models"
+	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +19,7 @@ type EventTypeHandler struct {
 // NewEventTypeHandler creates a new event type handler
 func NewEventTypeHandler() *EventTypeHandler {
 	return &EventTypeHandler{
-		service: services.NewEventTypeService(),
+		service: services.NewEventTypeService(repositories.NewEventTypeRepository()),
 	}
 }
 

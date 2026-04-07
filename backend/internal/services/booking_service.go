@@ -6,22 +6,21 @@ import (
 	"time"
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/models"
-	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 )
 
 // BookingService handles business logic for bookings
 type BookingService struct {
-	repo       *repositories.BookingRepository
-	slotRepo   *repositories.TimeSlotRepository
-	etRepo     *repositories.EventTypeRepository
+	repo     BookingRepository
+	slotRepo TimeSlotRepository
+	etRepo   EventTypeRepository
 }
 
 // NewBookingService creates a new booking service
-func NewBookingService() *BookingService {
+func NewBookingService(repo BookingRepository, slotRepo TimeSlotRepository, etRepo EventTypeRepository) *BookingService {
 	return &BookingService{
-		repo:     repositories.NewBookingRepository(),
-		slotRepo: repositories.NewTimeSlotRepository(),
-		etRepo:   repositories.NewEventTypeRepository(),
+		repo:     repo,
+		slotRepo: slotRepo,
+		etRepo:   etRepo,
 	}
 }
 

@@ -27,7 +27,7 @@ type CreateBookingRequest struct {
 
 // UpdateBookingRequest represents the request body for updating a booking
 type UpdateBookingRequest struct {
-	GuestName *string `json:"guestName,omitempty" binding:"omitempty,min=1,max=100"`
+	GuestName  *string `json:"guestName,omitempty" binding:"omitempty,min=1,max=100"`
 	GuestEmail *string `json:"guestEmail,omitempty" binding:"omitempty,email,max=255"`
-	Timezone  *string `json:"timezone,omitempty" binding:"omitempty,max=50"`
+	Timezone   *string `json:"timezone,omitempty" binding:"omitempty,max=50"`
 }

@@ -1,0 +1,80 @@
+run:
+  # Timeout for analysis
+  timeout: 5m
+  # Include test files
+  tests: true
+
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - gosimple
+    - ineffassign
+    - unused
+    - gofmt
+    - goimports
+    - misspell
+    - gosec
+    - prealloc
+    - unconvert
+    - wastedassign
+
+linters-settings:
+  govet:
+    check-shadowing: true
+    settings:
+      printf:
+        funcs:
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+
+  errcheck:
+    check-type-assertions: true
+    check-blank: false
+
+  gosec:
+    excludes:
+      - G104 # Unhandled errors - we handle them in service layer
+
+  misspell:
+    locale: US
+
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: false
+
+issues:
+  # Maximum count of issues to show (0 = show all)
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  # Exclude generated files
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+    - path: .*_test\.go
+      linters:
+        - unused
+        - unparam
+
+  # Exclude patterns for specific issues
+  exclude:
+    # G104: Potential file resource leak
+    - "G104:"
+    # govet: common false positive
+    - "shadow: declaration of"
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  path-prefix: ""
+  sort-results: true

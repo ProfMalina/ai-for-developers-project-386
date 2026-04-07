@@ -8,9 +8,9 @@ import (
 
 // Config holds application configuration
 type Config struct {
-	ServerPort   string
-	DatabaseURL  string
-	Env          string
+	ServerPort  string
+	DatabaseURL string
+	Env         string
 }
 
 // LoadConfig loads configuration from environment and .env file

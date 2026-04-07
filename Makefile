@@ -1,5 +1,6 @@
 .PHONY: help compile fmt fmt-check lint openapi clean install-dev dev backend-build backend-run backend-db-up backend-db-down backend-docker-build \
-        docker-up docker-down docker-logs docker-build docker-rebuild frontend-test fronttest frontend-coverage frontend-lint
+        docker-up docker-down docker-logs docker-build docker-rebuild frontend-test fronttest frontend-coverage frontend-lint \
+        backend-test backend-test-coverage backend-test-verbose backend-lint backend-lint-fix backend-fmt backtest
 
 TYPESPEC_DIR := typespec
 BACKEND_DIR := backend
@@ -63,6 +64,27 @@ backend-db-down: ## Stop PostgreSQL Docker
 
 backend-docker-build: ## Build backend Docker image
 	cd $(BACKEND_DIR) && docker build -t booking-backend .
+
+backend-test: ## Run backend tests
+	cd $(BACKEND_DIR) && go test ./...
+
+backend-test-coverage: ## Run backend tests with coverage report
+	cd $(BACKEND_DIR) && go test ./... -coverprofile=coverage.out
+	cd $(BACKEND_DIR) && go tool cover -html=coverage.out -o coverage.html
+
+backend-test-verbose: ## Run backend tests with verbose output
+	cd $(BACKEND_DIR) && go test ./... -v
+
+backend-lint: ## Run backend linter (golangci-lint)
+	cd $(BACKEND_DIR) && golangci-lint run
+
+backend-lint-fix: ## Run backend linter with auto-fix
+	cd $(BACKEND_DIR) && golangci-lint run --fix
+
+backend-fmt: ## Check Go formatting
+	cd $(BACKEND_DIR) && gofmt -l .
+
+backtest: backend-test backend-lint ## Run backend tests and linter
 
 # Docker Compose targets
 docker-up: ## Start all services (frontend + backend + database)
