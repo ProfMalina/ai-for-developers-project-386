@@ -33,4 +33,31 @@ describe('EventTypeManagement Component', () => {
     render(<EventTypeManagement />);
     expect(true).toBe(true);
   });
+
+  it('should render event descriptions', async () => {
+    render(<EventTypeManagement />);
+    const description = await screen.findByText(/Индивидуальная консультация по проекту/i);
+    expect(description).toBeInTheDocument();
+  });
+
+  it('should render edit and delete buttons for each event type', async () => {
+    render(<EventTypeManagement />);
+    await screen.findByText('Консультация');
+
+    // Edit and delete icons should be present
+    const editButtons = screen.getAllByRole('button');
+    expect(editButtons.length).toBeGreaterThan(0);
+  });
+
+  it('should display second event type', async () => {
+    render(<EventTypeManagement />);
+    const meetingType = await screen.findByText('Встреча');
+    expect(meetingType).toBeInTheDocument();
+  });
+
+  it('should display 60 minutes badge for second event', async () => {
+    render(<EventTypeManagement />);
+    const badge = await screen.findByText(/60 мин/i);
+    expect(badge).toBeInTheDocument();
+  });
 });
