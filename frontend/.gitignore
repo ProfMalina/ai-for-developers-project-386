@@ -29,3 +29,8 @@ dist-ssr
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Playwright E2E tests
+playwright-report/
+test-results/
+e2e-out/

@@ -29,6 +29,9 @@ clean: ## Remove generated files
 install-dev: ## Install frontend dependencies
 	cd $(FRONTEND_DIR) && npm install
 
+install-e2e: ## Install Playwright browsers for E2E tests
+	cd $(FRONTEND_DIR) && npx playwright install --with-deps
+
 dev: ## Start frontend dev server
 	cd $(FRONTEND_DIR) && npm run dev
 
@@ -46,6 +49,24 @@ frontend-coverage: ## Run frontend tests with coverage report
 
 frontend-lint: ## Run frontend ESLint
 	cd $(FRONTEND_DIR) && npm run lint
+
+frontend-e2e: ## Run Playwright E2E tests
+	cd $(FRONTEND_DIR) && npx playwright test
+
+frontend-e2e-ui: ## Run Playwright E2E tests with UI
+	cd $(FRONTEND_DIR) && npx playwright test --ui
+
+frontend-e2e-headed: ## Run Playwright E2E tests in headed mode
+	cd $(FRONTEND_DIR) && npx playwright test --headed
+
+frontend-e2e-debug: ## Run Playwright E2E tests in debug mode
+	cd $(FRONTEND_DIR) && npx playwright test --debug
+
+frontend-e2e-chromium: ## Run Playwright E2E tests on Chromium only
+	cd $(FRONTEND_DIR) && npx playwright test --project=chromium
+
+frontend-e2e-report: ## Open Playwright HTML report
+	cd $(FRONTEND_DIR) && npx playwright show-report
 
 # Backend targets
 backend-build: ## Build the Go backend
