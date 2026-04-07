@@ -1,5 +1,5 @@
 .PHONY: help compile fmt fmt-check lint openapi clean install-dev dev backend-build backend-run backend-db-up backend-db-down backend-docker-build \
-        docker-up docker-down docker-logs docker-build docker-rebuild frontend-test frontend-coverage frontend-lint
+        docker-up docker-down docker-logs docker-build docker-rebuild frontend-test fronttest frontend-coverage frontend-lint
 
 TYPESPEC_DIR := typespec
 BACKEND_DIR := backend
@@ -33,6 +33,8 @@ dev: ## Start frontend dev server
 
 frontend-test: ## Run frontend tests
 	cd $(FRONTEND_DIR) && npm test -- --run
+
+fronttest: frontend-test ## Alias for frontend-test
 
 frontend-coverage: ## Run frontend tests with coverage report
 	cd $(FRONTEND_DIR) && npm run test:coverage -- --run
