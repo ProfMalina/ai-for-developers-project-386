@@ -124,6 +124,17 @@ export const handlers = [
       );
     }
 
+    // Check for conflict (slot already booked)
+    if (data.slotId === 'booked-slot') {
+      return HttpResponse.json(
+        {
+          error: 'CONFLICT',
+          message: 'This slot is already booked',
+        },
+        { status: 409 }
+      );
+    }
+
     return HttpResponse.json(mockBooking, { status: 201 });
   }),
 
@@ -176,6 +187,40 @@ export const handlers = [
 
   http.get('*/api/slots', () => {
     return HttpResponse.json(createMockPaginatedResponse(mockTimeSlots));
+  }),
+
+  // Owner API - additional endpoints
+  http.get('*/api/event-types/:id', ({ params }) => {
+    const { id } = params;
+    const eventType = mockEventTypes.find((et) => et.id === id);
+    if (!eventType) {
+      return new HttpResponse('Not Found', { status: 404 });
+    }
+    return HttpResponse.json(eventType);
+  }),
+
+  http.patch('*/api/event-types/:id', async ({ request }) => {
+    const body = await request.json();
+    const data = body as Record<string, unknown>;
+
+    return HttpResponse.json({
+      id: 'event-type-1',
+      name: data.name || 'Консультация',
+      description: data.description || 'Индивидуальная консультация по проекту',
+      durationMinutes: (data.durationMinutes as number) || 30,
+    });
+  }),
+
+  http.delete('*/api/event-types/:id', () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get('*/api/bookings/:id', () => {
+    return HttpResponse.json(mockBooking);
+  }),
+
+  http.delete('*/api/bookings/:id', () => {
+    return new HttpResponse(null, { status: 204 });
   }),
 ];
 
