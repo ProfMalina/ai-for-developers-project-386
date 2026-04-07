@@ -39,3 +39,6 @@ tsp-output/
 # Go
 backend/coverage
 backend/test-reports
+
+# Frontend test coverage
+frontend/coverage/
