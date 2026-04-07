@@ -1,8 +1,9 @@
 .PHONY: help compile fmt fmt-check lint openapi clean install-dev dev backend-build backend-run backend-db-up backend-db-down backend-docker-build \
-        docker-up docker-down docker-logs docker-build docker-rebuild
+        docker-up docker-down docker-logs docker-build docker-rebuild frontend-test frontend-coverage frontend-lint
 
 TYPESPEC_DIR := typespec
 BACKEND_DIR := backend
+FRONTEND_DIR := frontend
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -29,6 +30,15 @@ install-dev: ## Install frontend dependencies
 
 dev: ## Start frontend dev server
 	cd frontend && npm run dev
+
+frontend-test: ## Run frontend tests
+	cd $(FRONTEND_DIR) && npm test -- --run
+
+frontend-coverage: ## Run frontend tests with coverage report
+	cd $(FRONTEND_DIR) && npm run test:coverage -- --run
+
+frontend-lint: ## Run frontend ESLint
+	cd $(FRONTEND_DIR) && npm run lint
 
 # Backend targets
 backend-build: ## Build the Go backend

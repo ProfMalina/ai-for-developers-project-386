@@ -72,7 +72,6 @@ export function BookingPage() {
 
   useEffect(() => {
     fetchEventType();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchEventType]);
 
   const fetchAvailableSlots = async (date: Date) => {

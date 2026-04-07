@@ -81,10 +81,11 @@ export function SlotGeneration() {
       });
 
       setModalOpened(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Не удалось создать слоты';
       notifications.show({
         title: 'Ошибка',
-        message: error.message || 'Не удалось создать слоты',
+        message: message,
         color: 'red',
       });
     } finally {
