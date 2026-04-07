@@ -23,14 +23,8 @@ linters:
 
 linters-settings:
   govet:
-    check-shadowing: true
-    settings:
-      printf:
-        funcs:
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+    enable:
+      - shadow
 
   errcheck:
     check-type-assertions: true
@@ -71,10 +65,12 @@ issues:
     # govet: common false positive
     - "shadow: declaration of"
 
+  uniq-by-line: true
+
 output:
-  format: colored-line-number
+  formats:
+    - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
   path-prefix: ""
   sort-results: true

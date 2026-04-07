@@ -32,9 +32,7 @@ install-dev: ## Install frontend dependencies
 dev: ## Start frontend dev server
 	cd $(FRONTEND_DIR) && npm run dev
 
-alltest:
-	fronttest
-	backtest
+alltest: fronttest backtest
 
 frontend-test: ## Run frontend tests
 	cd $(FRONTEND_DIR) && npm test -- --run
@@ -75,14 +73,17 @@ backend-test-coverage: ## Run backend tests with coverage report
 backend-test-verbose: ## Run backend tests with verbose output
 	cd $(BACKEND_DIR) && go test ./... -v
 
-backend-lint: ## Run backend linter (golangci-lint)
-	cd $(BACKEND_DIR) && golangci-lint run
+backend-lint: ## Run backend linter (go vet + static analysis)
+	cd $(BACKEND_DIR) && go vet ./...
+	cd $(BACKEND_DIR) && go run honnef.co/go/tools/cmd/staticcheck@latest ./...
 
-backend-lint-fix: ## Run backend linter with auto-fix
-	cd $(BACKEND_DIR) && golangci-lint run --fix
+backend-lint-fix: ## Auto-fix lint issues (format, organize imports)
+	cd $(BACKEND_DIR) && gofmt -w .
+	cd $(BACKEND_DIR) && go mod tidy
 
 backend-fmt: ## Check Go formatting
 	cd $(BACKEND_DIR) && gofmt -l .
+	cd $(BACKEND_DIR) && test -z "$$(gofmt -l .)" || (echo "Files need formatting:" && gofmt -l . && exit 1)
 
 backtest: backend-test backend-lint ## Run backend tests and linter
 
