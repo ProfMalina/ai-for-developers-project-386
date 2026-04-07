@@ -26,15 +26,21 @@ clean: ## Remove generated files
 	rm -rf $(TYPESPEC_DIR)/tsp-output
 
 install-dev: ## Install frontend dependencies
-	cd frontend && npm install
+	cd $(FRONTEND_DIR) && npm install
 
 dev: ## Start frontend dev server
-	cd frontend && npm run dev
+	cd $(FRONTEND_DIR) && npm run dev
+
+alltest:
+	fronttest
+	backtest
 
 frontend-test: ## Run frontend tests
 	cd $(FRONTEND_DIR) && npm test -- --run
 
-fronttest: frontend-test ## Alias for frontend-test
+fronttest:
+	cd $(FRONTEND_DIR) && npm test -- --run
+	cd $(FRONTEND_DIR) && npm run lint
 
 frontend-coverage: ## Run frontend tests with coverage report
 	cd $(FRONTEND_DIR) && npm run test:coverage -- --run
