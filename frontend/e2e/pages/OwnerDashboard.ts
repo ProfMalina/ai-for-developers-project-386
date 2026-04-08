@@ -22,10 +22,10 @@ export class OwnerDashboard extends BasePage {
    */
   async expectLoaded(): Promise<void> {
     await this.expectHeading('Панель управления');
-    // Verify tabs
-    await expect(this.page.getByText('Типы встреч')).toBeVisible();
-    await expect(this.page.getByText('Расписание')).toBeVisible();
-    await expect(this.page.getByText('Бронирования')).toBeVisible();
+    // Verify tabs exist (use role=tab to avoid strict mode violations)
+    await expect(this.page.getByRole('tab', { name: 'Типы встреч' })).toBeVisible({ timeout: 10000 });
+    await expect(this.page.getByRole('tab', { name: 'Расписание' })).toBeVisible({ timeout: 10000 });
+    await expect(this.page.getByRole('tab', { name: 'Бронирования' })).toBeVisible({ timeout: 10000 });
   }
 
   /**

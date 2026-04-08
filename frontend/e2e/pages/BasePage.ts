@@ -52,9 +52,10 @@ export class BasePage {
 
   /**
    * Verify page title or heading
+   * Note: Mantine Title component renders as div, not h1-h6
    */
   async expectHeading(text: string): Promise<void> {
-    await expect(this.page.getByRole('heading', { name: text })).toBeVisible();
+    await expect(this.page.getByText(text).first()).toBeVisible();
   }
 
   /**

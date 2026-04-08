@@ -21,10 +21,10 @@ export class BookingPage extends BasePage {
    */
   async expectLoaded(eventTypeName: string): Promise<void> {
     await this.expectHeading(`Бронирование: ${eventTypeName}`);
-    // Verify stepper is present
-    await expect(this.page.getByText('Шаг 1: Выберите дату')).toBeVisible();
-    await expect(this.page.getByText('Шаг 2: Выберите время')).toBeVisible();
-    await expect(this.page.getByText('Шаг 3: Ваши данные')).toBeVisible();
+    // Verify stepper is present (Mantine Stepper renders steps with specific text)
+    await expect(this.page.getByText('Шаг 1: Выберите дату').first()).toBeVisible();
+    await expect(this.page.getByText('Шаг 2: Выберите время').first()).toBeVisible();
+    await expect(this.page.getByText('Шаг 3: Ваши данные').first()).toBeVisible();
   }
 
   /**

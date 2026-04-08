@@ -50,8 +50,8 @@ frontend-coverage: ## Run frontend tests with coverage report
 frontend-lint: ## Run frontend ESLint
 	cd $(FRONTEND_DIR) && npm run lint
 
-frontend-e2e: ## Run Playwright E2E tests
-	cd $(FRONTEND_DIR) && npx playwright test
+frontend-e2e: ## Run Playwright E2E tests (starts dev server automatically)
+	cd $(FRONTEND_DIR) && npx playwright test --workers=1
 
 frontend-e2e-ui: ## Run Playwright E2E tests with UI
 	cd $(FRONTEND_DIR) && npx playwright test --ui
@@ -63,10 +63,13 @@ frontend-e2e-debug: ## Run Playwright E2E tests in debug mode
 	cd $(FRONTEND_DIR) && npx playwright test --debug
 
 frontend-e2e-chromium: ## Run Playwright E2E tests on Chromium only
-	cd $(FRONTEND_DIR) && npx playwright test --project=chromium
+	cd $(FRONTEND_DIR) && npx playwright test --project=chromium --workers=1
 
 frontend-e2e-report: ## Open Playwright HTML report
 	cd $(FRONTEND_DIR) && npx playwright show-report
+
+frontend-e2e-with-server: ## Run Playwright E2E tests with dev server
+	cd $(FRONTEND_DIR) && npm run dev & sleep 3 && npx playwright test --workers=1 && kill %1 2>/dev/null
 
 # Backend targets
 backend-build: ## Build the Go backend
