@@ -10,58 +10,14 @@ test.describe('Guest Booking Flow', () => {
   test.beforeEach(async ({ page }) => {
     guestHome = new GuestHomePage(page);
     bookingPage = new BookingPage(page);
-
-    // Mock event types list
-    await page.route('**/api/public/event-types**', async route => {
-      if (route.request().url().includes('/public/event-types') && !route.request().url().includes('/public/event-types/')) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            data: testEventTypes,
-            meta: { total: 2, page: 1, pageSize: 10, totalPages: 1 },
-          }),
-        });
-      }
-    });
-
-    // Mock individual event type
-    await page.route('**/api/public/event-types/test-consultation', async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(testEventTypes[0]),
-      });
-    });
-
-    // Mock slots
-    await page.route('**/api/public/slots**', async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          data: [
-            { id: 'slot-1', startTime: '2026-04-09T10:00:00Z', isAvailable: true, eventTypeId: 'test-consultation' },
-            { id: 'slot-2', startTime: '2026-04-09T10:30:00Z', isAvailable: true, eventTypeId: 'test-consultation' },
-            { id: 'slot-3', startTime: '2026-04-09T11:00:00Z', isAvailable: false, eventTypeId: 'test-consultation' },
-          ],
-          meta: { total: 3, page: 1, pageSize: 100, totalPages: 1 },
-        }),
-      });
-    });
+    // No mocking - use real backend on port 8081
   });
 
   test.afterEach(async ({ page }) => {
-    await page.unroute('**/api/**');
+    // No unroute needed since we're not mocking
   });
 
   test('should view event types list on guest home page', async ({ page }) => {
-    // Listen for console errors
-    page.on('console', msg => {
-      if (msg.type() === 'error') console.log('BROWSER ERROR:', msg.text());
-    });
-    page.on('pageerror', err => console.log('PAGE ERROR:', err.message));
-
     await guestHome.goto();
     await guestHome.expectLoaded();
 

@@ -71,7 +71,8 @@ export class OwnerDashboard extends BasePage {
    */
   async submitEventType(): Promise<void> {
     await this.page.getByRole('button', { name: /создать|обновить/i }).click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(500);
   }
 
   /**
@@ -109,7 +110,8 @@ export class OwnerDashboard extends BasePage {
       await dialog.accept();
     });
 
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(500);
   }
 
   /**
@@ -174,7 +176,8 @@ export class OwnerDashboard extends BasePage {
    */
   async submitSlotGeneration(): Promise<void> {
     await this.page.getByRole('button', { name: 'Сгенерировать слоты' }).click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(500);
   }
 
   /**
@@ -221,7 +224,8 @@ export class OwnerDashboard extends BasePage {
 
     // Confirm cancellation
     await this.page.getByRole('button', { name: /да, отменить/i }).click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(500);
   }
 
   /**
@@ -236,6 +240,7 @@ export class OwnerDashboard extends BasePage {
    */
   async goToBookingsPage(pageNum: number): Promise<void> {
     await this.page.getByRole('button', { name: String(pageNum) }).click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(500);
   }
 }

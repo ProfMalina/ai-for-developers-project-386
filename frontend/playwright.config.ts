@@ -76,11 +76,18 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
+  /* Web server configuration.
+   * Playwright's webServer feature has issues with Vite HMR and env vars.
+   * Instead, start the dev server manually before running tests.
+   * In CI, the workflow starts the server separately.
+   */
   webServer: {
-    command: 'npm run dev',
+    command: 'npx vite',
     url: 'http://localhost:5173',
     reuseExistingServer: true,
     timeout: 60000,
+    env: {
+      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://localhost:8081',
+    },
   },
 });

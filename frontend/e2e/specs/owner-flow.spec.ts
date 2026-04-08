@@ -16,11 +16,11 @@ test.describe('Owner Management Flow', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [
+            items: [
               { id: 'consultation', name: 'Консультация', description: 'Individual consultation', durationMinutes: 30 },
               { id: 'meeting', name: 'Встреча', description: 'Group meeting', durationMinutes: 60 },
             ],
-            meta: { total: 2, page: 1, pageSize: 10, totalPages: 1 },
+            pagination: { page: 1, pageSize: 10, totalItems: 2, totalPages: 1, hasNext: false, hasPrev: false },
           }),
         });
       }
@@ -46,7 +46,7 @@ test.describe('Owner Management Flow', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          data: [
+          items: [
             {
               id: 'booking-1',
               guestName: 'Иван Иванов',
@@ -57,7 +57,7 @@ test.describe('Owner Management Flow', () => {
               createdAt: '2026-04-01T09:00:00Z',
             },
           ],
-          meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 },
+          pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1, hasNext: false, hasPrev: false },
         }),
       });
     });
@@ -68,8 +68,8 @@ test.describe('Owner Management Flow', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          data: [],
-          meta: { total: 0, page: 1, pageSize: 10, totalPages: 1 },
+          items: [],
+          pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 1, hasNext: false, hasPrev: false },
         }),
       });
     });
@@ -114,11 +114,11 @@ test.describe('Owner Management Flow', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [
+            items: [
               { id: 'consultation', name: 'Консультация', description: 'Individual', durationMinutes: 30 },
               { id: 'meeting', name: 'Встреча', description: 'Group', durationMinutes: 60 },
             ],
-            meta: { total: 2, page: 1, pageSize: 10, totalPages: 1 },
+            pagination: { page: 1, pageSize: 10, totalItems: 2, totalPages: 1, hasNext: false, hasPrev: false },
           }),
         });
       }
@@ -163,11 +163,11 @@ test.describe('Owner Management Flow', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [
+            items: [
               { id: 'consultation', name: 'Консультация', description: 'Individual', durationMinutes: 30 },
               { id: 'meeting', name: 'Встреча', description: 'Group', durationMinutes: 60 },
             ],
-            meta: { total: 2, page: 1, pageSize: 10, totalPages: 1 },
+            pagination: { page: 1, pageSize: 10, totalItems: 2, totalPages: 1, hasNext: false, hasPrev: false },
           }),
         });
       }
@@ -216,10 +216,10 @@ test.describe('Owner Management Flow', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [
+            items: [
               { id: 'consultation', name: 'Консультация', description: 'Individual', durationMinutes: 30 },
             ],
-            meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 },
+            pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1, hasNext: false, hasPrev: false },
           }),
         });
       }

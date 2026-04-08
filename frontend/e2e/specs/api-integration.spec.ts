@@ -25,11 +25,11 @@ test.describe('API Integration & Error Handling', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [
+            items: [
               { id: 'slot-1', startTime: '2026-04-09T10:00:00Z', isAvailable: true, eventTypeId: 'test-consultation' },
               { id: 'slot-2', startTime: '2026-04-09T10:30:00Z', isAvailable: true, eventTypeId: 'test-consultation' },
             ],
-            meta: { total: 2, page: 1, pageSize: 100, totalPages: 1 },
+            pagination: { page: 1, pageSize: 10, totalItems: 2, page: 1, pageSize: 100, totalPages: 1 },
           }),
         });
       });
@@ -99,10 +99,10 @@ test.describe('API Integration & Error Handling', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [
+            items: [
               { id: 'slot-1', startTime: '2026-04-09T10:00:00Z', isAvailable: true, eventTypeId: 'test-consultation' },
             ],
-            meta: { total: 1, page: 1, pageSize: 100, totalPages: 1 },
+            pagination: { page: 1, pageSize: 10, totalItems: 1, page: 1, pageSize: 100, totalPages: 1 },
           }),
         });
       });
@@ -163,10 +163,10 @@ test.describe('API Integration & Error Handling', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [
+            items: [
               { id: 'slot-1', startTime: '2026-04-09T10:00:00Z', isAvailable: true, eventTypeId: 'test-consultation' },
             ],
-            meta: { total: 1, page: 1, pageSize: 100, totalPages: 1 },
+            pagination: { page: 1, pageSize: 10, totalItems: 1, page: 1, pageSize: 100, totalPages: 1 },
           }),
         });
       });
@@ -217,7 +217,8 @@ test.describe('API Integration & Error Handling', () => {
       });
 
       await page.goto('/book/non-existent');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForTimeout(500);
 
       // Should show error or redirect to home
       const hasError = await page.getByText(/не найден|not found|ошибка/i).first().isVisible().catch(() => false);
@@ -312,8 +313,8 @@ test.describe('API Integration & Error Handling', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [{ id: '1' }], // Missing name, description, duration
-            meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 },
+            items: [{ id: '1' }], // Missing name, description, duration
+            pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1, hasNext: false, hasPrev: false },
           }),
         });
       });
@@ -338,8 +339,8 @@ test.describe('API Integration & Error Handling', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [],
-            meta: { total: 0, page: 1, pageSize: 10, totalPages: 1 },
+            items: [],
+            pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 1, hasNext: false, hasPrev: false },
           }),
         });
       });
@@ -349,8 +350,8 @@ test.describe('API Integration & Error Handling', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [],
-            meta: { total: 0, page: 1, pageSize: 10, totalPages: 1 },
+            items: [],
+            pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 1, hasNext: false, hasPrev: false },
           }),
         });
       });
@@ -371,8 +372,8 @@ test.describe('API Integration & Error Handling', () => {
             status: 200,
             contentType: 'application/json',
             body: JSON.stringify({
-              data: [],
-              meta: { total: 0, page: 1, pageSize: 10, totalPages: 1 },
+              items: [],
+              pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 1, hasNext: false, hasPrev: false },
             }),
           });
         }
@@ -406,8 +407,8 @@ test.describe('API Integration & Error Handling', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [],
-            meta: { total: 0, page: 1, pageSize: 10, totalPages: 1 },
+            items: [],
+            pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 1, hasNext: false, hasPrev: false },
           }),
         });
       });
@@ -417,7 +418,7 @@ test.describe('API Integration & Error Handling', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [{
+            items: [{
               id: 'booking-1',
               guestName: 'Test User',
               guestEmail: 'test@example.com',
@@ -425,7 +426,7 @@ test.describe('API Integration & Error Handling', () => {
               startTime: '2026-04-09T10:00:00Z',
               status: 'upcoming',
             }],
-            meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 },
+            pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1, hasNext: false, hasPrev: false },
           }),
         });
       });
@@ -484,11 +485,11 @@ test.describe('API Integration & Error Handling', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            data: [
+            items: [
               { id: 'slot-1', startTime: '2026-04-09T10:00:00Z', isAvailable: true, eventTypeId: 'test-consultation' },
               { id: 'slot-2', startTime: '2026-04-09T10:30:00Z', isAvailable: true, eventTypeId: 'test-consultation' },
             ],
-            meta: { total: 2, page: 1, pageSize: 100, totalPages: 1 },
+            pagination: { page: 1, pageSize: 10, totalItems: 2, page: 1, pageSize: 100, totalPages: 1 },
           }),
         });
       });

@@ -13,10 +13,12 @@ export class BasePage {
 
   /**
    * Navigate to a URL
+   * Use domcontentloaded to avoid waiting for API calls that may hang
    */
   async goto(url: string): Promise<void> {
-    await this.page.goto(url);
-    await this.page.waitForLoadState('networkidle');
+    await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+    // Wait for React to hydrate and API calls to complete
+    await this.page.waitForTimeout(2000);
   }
 
   /**
@@ -30,7 +32,8 @@ export class BasePage {
    * Wait for page to be ready
    */
   async waitForReady(): Promise<void> {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(500);
   }
 
   /**

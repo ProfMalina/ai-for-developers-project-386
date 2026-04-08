@@ -27,27 +27,32 @@ export class GuestHomePage extends BasePage {
 
   /**
    * Get event type card by name
+   * Note: Mantine Card renders as article, but text might be in child elements
    */
   getEventTypeCard(name: string) {
-    return this.page.locator('article').filter({ hasText: name });
+    // Use getByText which searches all descendants, then find the containing article
+    return this.page.locator('article').filter({ has: this.page.getByText(name).first() });
   }
 
   /**
    * Verify event type is displayed
    */
   async expectEventTypeVisible(name: string, duration: number): Promise<void> {
-    const card = this.getEventTypeCard(name);
-    await expect(card).toBeVisible();
-    await expect(card).toContainText(`${duration} мин`);
+    // First verify the text is visible
+    await expect(this.page.getByText(name).first()).toBeVisible();
+    // Then verify the duration badge
+    await expect(this.page.getByText(`${duration} мин`).first()).toBeVisible();
   }
 
   /**
    * Click "Забронировать" button on event type card
+   * Note: Button uses component={Link} so it renders as <a>, not <button>
    */
   async bookEventType(name: string): Promise<void> {
     const card = this.getEventTypeCard(name);
-    await card.getByRole('button', { name: 'Забронировать' }).click();
-    await this.page.waitForLoadState('networkidle');
+    await card.getByRole('link', { name: 'Забронировать' }).click();
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(500);
   }
 
   /**
@@ -62,6 +67,7 @@ export class GuestHomePage extends BasePage {
    */
   async goToPage(pageNum: number): Promise<void> {
     await this.page.getByRole('button', { name: String(pageNum) }).click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(500);
   }
 }

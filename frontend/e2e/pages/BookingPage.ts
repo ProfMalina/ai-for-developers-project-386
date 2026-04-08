@@ -103,7 +103,8 @@ export class BookingPage extends BasePage {
    */
   async submitBooking(): Promise<void> {
     await this.page.getByRole('button', { name: 'Подтвердить бронирование' }).click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(1000);
   }
 
   /**
