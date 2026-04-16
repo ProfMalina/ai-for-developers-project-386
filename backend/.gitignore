@@ -21,5 +21,7 @@ dist/
 build/
 
 # Test coverage
+coverage.out
+coverage.*.out
 coverage.txt
 coverage.html
