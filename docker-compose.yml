@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile
     container_name: booking_backend
     environment:
-      SERVER_PORT: 8080
+      PORT: ${PORT:-8080}
       APP_ENV: production
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/booking_db?sslmode=disable
       DB_MAX_CONNS: 10
@@ -36,14 +36,14 @@ services:
       DB_MAX_CONN_LIFETIME_HOURS: 1
       DB_MAX_CONN_IDLE_TIME_MIN: 30
     ports:
-      - "${BACKEND_PORT:-8081}:8080"
+      - "${BACKEND_PORT:-8081}:${PORT:-8080}"
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - booking_network
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${PORT:-8080}/health"]
       interval: 30s
       timeout: 10s
       retries: 3
