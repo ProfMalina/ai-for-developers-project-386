@@ -73,8 +73,8 @@ model EventType {
 }
 
 /**
- * Time Slot - A bookable time slot derived from an event type's duration
- * Represents a specific date and time range
+ * Time Slot - A bookable slot in the owner's public calendar
+ * Represents a specific date and time range available for booking
  */
 model TimeSlot {
   @minLength(1)
@@ -83,7 +83,7 @@ model TimeSlot {
 
   @minLength(1)
   @maxLength(100)
-  eventTypeId: string;
+  ownerId: string;
 
   startTime: utcDateTime;
   endTime: utcDateTime;
@@ -126,11 +126,11 @@ model CreateBookingRequest {
   eventTypeId: string;
 
   /**
-   * Start time of the booking
-   * Must be in the future (cannot book past or current slots)
-   * ISO 8601 format with timezone info (e.g., "2026-04-05T15:30:00+03:00")
+   * Selected slot identifier from the public slots list
    */
-  startTime: utcDateTime;
+  @minLength(1)
+  @maxLength(100)
+  slotId: string;
 
   @minLength(1)
   @maxLength(100)
@@ -558,38 +558,28 @@ namespace GuestApi {
   op getPublicEventType(@path eventTypeId: string): EventType | NotFoundError;
 
   /**
-   * Get available time slots for an event type with pagination
-   * Returns free slots that can be booked
+   * Get available time slots for the owner's public calendar with pagination
+   * Returns free slots that can be booked across public event types
    *
    * Query Parameters:
    * - dateFrom: Filter slots from this date (ISO 8601)
    * - dateTo: Filter slots until this date (ISO 8601)
-   * - timezone: Timezone for displaying times (default: owner's timezone)
    * - page: Page number (default: 1)
    * - pageSize: Items per page (default: 20, max: 100)
    *
    * Business Rules:
    * - Only future slots are returned (slots that haven't started yet)
    * - Slots that are currently in progress or have already ended are excluded
-   * - Times are returned in the specified or owner's default timezone
+   * - Times are returned in UTC and can be localized by the client
    */
   @get
-  @route("/event-types/{eventTypeId}/slots")
+  @route("/slots")
   op getAvailableSlots(
-    @path eventTypeId: string,
-
     /** Filter slots by start date (ISO 8601) */
     @query dateFrom?: utcDateTime,
 
     /** Filter slots by end date (ISO 8601) */
     @query dateTo?: utcDateTime,
-
-    /**
-     * Optional timezone for displaying slot times.
-     * If not provided, owner's default timezone is used.
-     * Format: IANA timezone identifier (e.g., "Europe/Moscow")
-     */
-    @query timezone?: string,
 
     /** Page number (1-based, default: 1) */
     @query @minValue(1) page?: int32,
@@ -601,7 +591,7 @@ namespace GuestApi {
     pageSize?: int32,
   ): {
     @body body: PaginatedResponse<TimeSlot>;
-  } | NotFoundError;
+  };
 
   /**
    * Create a booking
@@ -609,7 +599,7 @@ namespace GuestApi {
    *
    * Validation Rules:
    * - eventTypeId: Required, must exist
-   * - startTime: Required, must be in the future (strictly greater than current time)
+   * - slotId: Required, must refer to an available slot
    * - guestName: Required, 1-100 characters
    * - guestEmail: Required, valid email format, 1-255 characters
    * - timezone: Optional, valid IANA timezone
@@ -619,7 +609,7 @@ namespace GuestApi {
    *   - Cannot book a slot that overlaps with an existing booking
    *   - Applies even for different event types
    * - Cannot book a slot that has already started or ended
-   *   - Booking startTime must be in the future (strictly greater than current time)
+   *   - Slot availability is validated on the server before booking creation
    * - All times are interpreted in the owner's configured timezone
    */
   @post

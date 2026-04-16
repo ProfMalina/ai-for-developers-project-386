@@ -91,7 +91,7 @@ Key features:
 #### Guest API (`/api/public`)
 - ✅ `GET /api/public/event-types` - List public event types
 - ✅ `GET /api/public/event-types/:id` - Get public event type
-- ✅ `GET /api/public/event-types/:id/slots` - Get available slots
+- ✅ `GET /api/public/slots` - Get available slots
 - ✅ `POST /api/public/bookings` - Create booking (201)
 
 #### Additional

@@ -171,7 +171,6 @@ export const guestApi = {
     params?: {
       dateFrom?: string;
       dateTo?: string;
-      timezone?: string;
       page?: number;
       pageSize?: number;
     }

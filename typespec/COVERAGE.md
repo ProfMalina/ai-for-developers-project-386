@@ -33,7 +33,7 @@ This document verifies that the TypeSpec API specification (`typespec/main.tsp`)
 
 ### 2. Select Event Type and View Calendar
 - **SPEC.MD**: "Выбирает тип события, открывает календарь и выбирает свободный слот"
-- **TypeSpec**: `GET /api/public/event-types/{eventTypeId}/slots` - returns available slots for selection
+- **TypeSpec**: `GET /api/public/slots` - returns available slots for selection in the public calendar
 - **Status**: ✅ Covered
 
 ### 3. Create Booking
@@ -110,7 +110,7 @@ This document verifies that the TypeSpec API specification (`typespec/main.tsp`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/public/event-types` | View available event types |
-| GET | `/api/public/event-types/{id}/slots` | View available slots for event type (with timezone support, excludes past slots) |
+| GET | `/api/public/slots` | View available public slots (paginated, excludes past slots) |
 | POST | `/api/public/bookings` | Create booking (with timezone, validates future slots only) |
 
 ## Next Steps

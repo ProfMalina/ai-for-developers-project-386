@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import { afterAll, afterEach, beforeAll } from 'vitest';
 import type {
   EventType,
   Booking,
@@ -96,7 +97,7 @@ export const handlers = [
     const data = body as Record<string, unknown>;
 
     // Validate required fields
-    if (!data.eventTypeId || !data.guestName || !data.guestEmail || !data.startTime) {
+    if (!data.eventTypeId || !data.slotId || !data.guestName || !data.guestEmail) {
       return HttpResponse.json(
         {
           error: 'VALIDATION_ERROR',

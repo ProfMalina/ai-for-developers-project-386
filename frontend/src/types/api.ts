@@ -49,8 +49,7 @@ export interface UpdateEventTypeRequest {
 
 export interface CreateBookingRequest {
   eventTypeId: string;
-  slotId?: string;
-  startTime: string; // UTC datetime
+  slotId: string;
   guestName: string;
   guestEmail: string;
   timezone?: string;
