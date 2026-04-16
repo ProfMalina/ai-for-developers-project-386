@@ -18,8 +18,13 @@ func LoadConfig() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load()
 
+	serverPort := getEnv("PORT", "")
+	if serverPort == "" {
+		serverPort = getEnv("SERVER_PORT", "8080")
+	}
+
 	return &Config{
-		ServerPort:  getEnv("SERVER_PORT", "8080"),
+		ServerPort:  serverPort,
 		DatabaseURL: getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/booking_db?sslmode=disable"),
 		Env:         getEnv("APP_ENV", "development"),
 	}, nil
