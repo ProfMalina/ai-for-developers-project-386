@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { http, HttpResponse } from 'msw';
 import { ownerApi, guestApi, ApiError, ApiValidationError, ApiNotFoundError, ApiConflictError } from './client';
+import { server } from '../test/mocks';
 
 describe('API Client Error Classes', () => {
   describe('ApiError', () => {
@@ -183,13 +185,52 @@ describe('Guest API', () => {
 
       expect(result.items).toHaveLength(2);
     });
+
+    it('should request owner-level public slots endpoint with query params', async () => {
+      let capturedPathname = '';
+      let capturedQuery = '';
+
+      server.use(
+        http.get('*/api/public/slots', ({ request }) => {
+          const url = new URL(request.url);
+          capturedPathname = url.pathname;
+          capturedQuery = url.search;
+
+          return HttpResponse.json({
+            items: [],
+            pagination: {
+              page: 2,
+              pageSize: 50,
+              totalItems: 0,
+              totalPages: 0,
+              hasNext: false,
+              hasPrev: false,
+            },
+          });
+        })
+      );
+
+      await guestApi.getAvailableSlots({
+        dateFrom: '2026-04-08T00:00:00Z',
+        dateTo: '2026-04-08T23:59:59Z',
+        page: 2,
+        pageSize: 50,
+      });
+
+      expect(capturedPathname).toBe('/api/public/slots');
+      expect(capturedQuery).toContain('dateFrom=2026-04-08T00:00:00Z');
+      expect(capturedQuery).toContain('dateTo=2026-04-08T23:59:59Z');
+      expect(capturedQuery).toContain('page=2');
+      expect(capturedQuery).toContain('pageSize=50');
+      expect(capturedQuery).not.toContain('timezone=');
+    });
   });
 
   describe('createBooking', () => {
     it('should create a booking', async () => {
       const bookingData = {
         eventTypeId: 'event-type-1',
-        startTime: '2026-04-08T10:00:00Z',
+        slotId: 'slot-1',
         guestName: 'Тест Пользователь',
         guestEmail: 'test@example.com',
       };
@@ -198,6 +239,41 @@ describe('Guest API', () => {
 
       expect(result.guestName).toBe('Иван Иванов');
       expect(result.eventTypeId).toBe('event-type-1');
+    });
+
+    it('should send slot-based public booking payload', async () => {
+      let capturedBody: Record<string, unknown> | null = null;
+
+      server.use(
+        http.post('*/api/public/bookings', async ({ request }) => {
+          capturedBody = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({
+            id: 'booking-1',
+            eventTypeId: 'event-type-1',
+            slotId: 'slot-1',
+            guestName: 'Тест Пользователь',
+            guestEmail: 'test@example.com',
+            createdAt: '2026-04-07T12:00:00Z',
+            startTime: '2026-04-08T10:00:00Z',
+            endTime: '2026-04-08T10:30:00Z',
+          }, { status: 201 });
+        })
+      );
+
+      await guestApi.createBooking({
+        eventTypeId: 'event-type-1',
+        slotId: 'slot-1',
+        guestName: 'Тест Пользователь',
+        guestEmail: 'test@example.com',
+      });
+
+      expect(capturedBody).toMatchObject({
+        eventTypeId: 'event-type-1',
+        slotId: 'slot-1',
+        guestName: 'Тест Пользователь',
+        guestEmail: 'test@example.com',
+      });
+      expect(capturedBody).not.toHaveProperty('startTime');
     });
   });
 });

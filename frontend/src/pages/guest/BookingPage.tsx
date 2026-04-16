@@ -159,7 +159,6 @@ export function BookingPage() {
       const bookingData: CreateBookingRequest = {
         eventTypeId: eventTypeId!,
         slotId: selectedSlot.id,
-        startTime: selectedSlot.startTime,
         guestName: guestName.trim(),
         guestEmail: guestEmail.trim(),
       };
