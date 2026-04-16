@@ -19,7 +19,7 @@ type Booking struct {
 // CreateBookingRequest represents the request body for creating a booking
 type CreateBookingRequest struct {
 	EventTypeID string  `json:"eventTypeId" binding:"required,uuid"`
-	SlotID      *string `json:"slotId,omitempty" binding:"omitempty,uuid"`
+	SlotID      *string `json:"slotId" binding:"required,uuid"`
 	GuestName   string  `json:"guestName" binding:"required,min=1,max=100"`
 	GuestEmail  string  `json:"guestEmail" binding:"required,email,max=255"`
 	Timezone    *string `json:"timezone,omitempty" binding:"omitempty,max=50"`

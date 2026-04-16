@@ -60,6 +60,7 @@ func TestPublicBookingHandler_Create_InvalidEmail(t *testing.T) {
 
 	payload := map[string]interface{}{
 		"eventTypeId": "123e4567-e89b-12d3-a456-426614174000",
+		"slotId":      "123e4567-e89b-12d3-a456-426614174001",
 		"guestName":   "John Doe",
 		"guestEmail":  "invalid-email",
 	}
@@ -80,6 +81,7 @@ func TestPublicBookingHandler_Create_InvalidEventTypeID(t *testing.T) {
 
 	payload := map[string]interface{}{
 		"eventTypeId": "invalid-uuid",
+		"slotId":      "123e4567-e89b-12d3-a456-426614174001",
 		"guestName":   "John Doe",
 		"guestEmail":  "john@example.com",
 	}
