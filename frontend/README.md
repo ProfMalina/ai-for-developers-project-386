@@ -148,7 +148,7 @@ The frontend integrates with the backend API following the TypeSpec contract:
 ### Guest API (`/api/public`)
 - `GET /api/public/event-types` - List available event types (paginated)
 - `GET /api/public/event-types/:id` - Get event type details
-- `GET /api/public/event-types/:id/slots` - List available slots (paginated)
+- `GET /api/public/slots` - List available public slots (paginated)
 - `POST /api/public/bookings` - Create a booking
 
 ## Validation
