@@ -125,6 +125,41 @@ func (r *BookingRepository) GetByID(ctx context.Context, id string) (*models.Boo
 
 // List retrieves a paginated list of bookings with filters and sorting
 func (r *BookingRepository) List(ctx context.Context, page, pageSize int, sortBy, sortOrder string, dateFrom, dateTo *time.Time) ([]models.Booking, int, error) {
+	query, countQuery, args := buildBookingListQueries(page, pageSize, sortBy, sortOrder, dateFrom, dateTo)
+
+	// Count total items
+	var totalItems int
+	err := db.Pool.QueryRow(ctx, countQuery, args[:len(args)-2]...).Scan(&totalItems)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count bookings: %w", err)
+	}
+
+	rows, err := db.Pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list bookings: %w", err)
+	}
+	defer rows.Close()
+
+	var bookings []models.Booking
+	for rows.Next() {
+		var booking models.Booking
+		err := rows.Scan(&booking.ID, &booking.EventTypeID, &booking.SlotID, &booking.GuestName,
+			&booking.GuestEmail, &booking.Timezone, &booking.StartTime, &booking.EndTime,
+			&booking.Status, &booking.CreatedAt)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to scan booking: %w", err)
+		}
+		bookings = append(bookings, booking)
+	}
+
+	if bookings == nil {
+		bookings = []models.Booking{}
+	}
+
+	return bookings, totalItems, nil
+}
+
+func buildBookingListQueries(page, pageSize int, sortBy, sortOrder string, dateFrom, dateTo *time.Time) (string, string, []interface{}) {
 	if sortBy == "" {
 		sortBy = "start_time"
 	}
@@ -159,8 +194,8 @@ func (r *BookingRepository) List(ctx context.Context, page, pageSize int, sortBy
 
 	offset := (page - 1) * pageSize
 
-	query := `SELECT id, event_type_id, slot_id, guest_name, guest_email, timezone, start_time, end_time, status, created_at FROM bookings WHERE 1=1`
-	countQuery := `SELECT COUNT(*) FROM bookings WHERE 1=1`
+	query := `SELECT id, event_type_id, slot_id, guest_name, guest_email, timezone, start_time, end_time, status, created_at FROM bookings WHERE status != 'cancelled'`
+	countQuery := `SELECT COUNT(*) FROM bookings WHERE status != 'cancelled'`
 	args := []interface{}{}
 	argIdx := 1
 
@@ -178,40 +213,10 @@ func (r *BookingRepository) List(ctx context.Context, page, pageSize int, sortBy
 		argIdx++
 	}
 
-	// Count total items
-	var totalItems int
-	err := db.Pool.QueryRow(ctx, countQuery, args...).Scan(&totalItems)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count bookings: %w", err)
-	}
-
-	// Add pagination
 	query += fmt.Sprintf(" ORDER BY %s %s LIMIT $%d OFFSET $%d", sortBy, sortOrder, argIdx, argIdx+1)
 	args = append(args, pageSize, offset)
 
-	rows, err := db.Pool.Query(ctx, query, args...)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to list bookings: %w", err)
-	}
-	defer rows.Close()
-
-	var bookings []models.Booking
-	for rows.Next() {
-		var booking models.Booking
-		err := rows.Scan(&booking.ID, &booking.EventTypeID, &booking.SlotID, &booking.GuestName,
-			&booking.GuestEmail, &booking.Timezone, &booking.StartTime, &booking.EndTime,
-			&booking.Status, &booking.CreatedAt)
-		if err != nil {
-			return nil, 0, fmt.Errorf("failed to scan booking: %w", err)
-		}
-		bookings = append(bookings, booking)
-	}
-
-	if bookings == nil {
-		bookings = []models.Booking{}
-	}
-
-	return bookings, totalItems, nil
+	return query, countQuery, args
 }
 
 // CheckOverlap checks if a new booking would overlap with existing bookings
