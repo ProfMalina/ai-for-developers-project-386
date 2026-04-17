@@ -99,7 +99,7 @@ func (s *BookingService) GetByID(ctx context.Context, id string) (*models.Bookin
 }
 
 // List retrieves a paginated list of bookings
-func (s *BookingService) List(ctx context.Context, page, pageSize int, sortBy, sortOrder string, status *string) (*models.PaginatedResponse[models.Booking], error) {
+func (s *BookingService) List(ctx context.Context, page, pageSize int, sortBy, sortOrder string, dateFrom, dateTo *time.Time) (*models.PaginatedResponse[models.Booking], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -107,7 +107,7 @@ func (s *BookingService) List(ctx context.Context, page, pageSize int, sortBy, s
 		pageSize = 20
 	}
 
-	items, totalItems, err := s.repo.List(ctx, page, pageSize, sortBy, sortOrder, status)
+	items, totalItems, err := s.repo.List(ctx, page, pageSize, sortBy, sortOrder, dateFrom, dateTo)
 	if err != nil {
 		return nil, err
 	}
