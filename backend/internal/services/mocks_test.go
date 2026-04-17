@@ -18,6 +18,11 @@ func (m *MockBookingRepository) Create(ctx context.Context, booking *models.Book
 	return args.Error(0)
 }
 
+func (m *MockBookingRepository) CreateWithReservedSlot(ctx context.Context, booking *models.Booking) error {
+	args := m.Called(ctx, booking)
+	return args.Error(0)
+}
+
 func (m *MockBookingRepository) GetByID(ctx context.Context, id string) (*models.Booking, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -81,6 +86,11 @@ func (m *MockTimeSlotRepository) GetAvailableSlots(ctx context.Context, ownerID 
 		return nil, args.Int(1), args.Error(2)
 	}
 	return args.Get(0).([]models.TimeSlot), args.Int(1), args.Error(2)
+}
+
+func (m *MockTimeSlotRepository) DeleteAvailableInRange(ctx context.Context, ownerID, eventTypeID string, startTime, endTime time.Time) error {
+	args := m.Called(ctx, ownerID, eventTypeID, startTime, endTime)
+	return args.Error(0)
 }
 
 func (m *MockTimeSlotRepository) MarkAsUnavailable(ctx context.Context, slotID string) error {

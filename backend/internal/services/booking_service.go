@@ -77,17 +77,9 @@ func (s *BookingService) Create(ctx context.Context, req models.CreateBookingReq
 		return nil, fmt.Errorf("selected time slot is already booked")
 	}
 
-	// Create the booking
-	if err := s.repo.Create(ctx, booking); err != nil {
+	// Atomically reserve the slot and create the booking.
+	if err := s.repo.CreateWithReservedSlot(ctx, booking); err != nil {
 		return nil, err
-	}
-
-	// Mark the slot as unavailable
-	if booking.SlotID != nil {
-		if err := s.slotRepo.MarkAsUnavailable(ctx, *booking.SlotID); err != nil {
-			// Log error but don't fail the booking
-			fmt.Printf("Warning: failed to mark slot as unavailable: %v\n", err)
-		}
 	}
 
 	return booking, nil

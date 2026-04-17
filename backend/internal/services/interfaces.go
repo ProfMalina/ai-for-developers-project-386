@@ -10,6 +10,7 @@ import (
 // BookingRepository defines the interface for booking data operations
 type BookingRepository interface {
 	Create(ctx context.Context, booking *models.Booking) error
+	CreateWithReservedSlot(ctx context.Context, booking *models.Booking) error
 	GetByID(ctx context.Context, id string) (*models.Booking, error)
 	List(ctx context.Context, page, pageSize int, sortBy, sortOrder string, dateFrom, dateTo *time.Time) ([]models.Booking, int, error)
 	CheckOverlap(ctx context.Context, startTime, endTime time.Time) (bool, error)
@@ -23,6 +24,7 @@ type TimeSlotRepository interface {
 	GetByID(ctx context.Context, id string) (*models.TimeSlot, error)
 	List(ctx context.Context, ownerID, eventTypeID string, page, pageSize int, available *bool, startTime, endTime *time.Time) ([]models.TimeSlot, int, error)
 	GetAvailableSlots(ctx context.Context, ownerID string, page, pageSize int, startTime, endTime *time.Time) ([]models.TimeSlot, int, error)
+	DeleteAvailableInRange(ctx context.Context, ownerID, eventTypeID string, startTime, endTime time.Time) error
 	MarkAsUnavailable(ctx context.Context, slotID string) error
 }
 

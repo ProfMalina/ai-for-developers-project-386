@@ -49,10 +49,9 @@ func TestBookingService_Create_Success(t *testing.T) {
 	mockEtRepo.On("GetByID", mock.Anything, eventTypeID).Return(eventType, nil)
 	mockSlotRepo.On("GetByID", mock.Anything, slotID).Return(slot, nil)
 	mockBookingRepo.On("CheckOverlap", mock.Anything, slot.StartTime, slot.EndTime).Return(false, nil)
-	mockBookingRepo.On("Create", mock.Anything, mock.MatchedBy(func(b *models.Booking) bool {
+	mockBookingRepo.On("CreateWithReservedSlot", mock.Anything, mock.MatchedBy(func(b *models.Booking) bool {
 		return b.EventTypeID == eventTypeID && b.GuestName == "John Doe"
 	})).Return(nil)
-	mockSlotRepo.On("MarkAsUnavailable", mock.Anything, slotID).Return(nil)
 
 	// Execute
 	result, err := service.Create(context.Background(), req)
@@ -63,6 +62,7 @@ func TestBookingService_Create_Success(t *testing.T) {
 	assert.Equal(t, eventTypeID, result.EventTypeID)
 	assert.Equal(t, "John Doe", result.GuestName)
 	assert.Equal(t, "confirmed", result.Status)
+	mockSlotRepo.AssertNotCalled(t, "MarkAsUnavailable", mock.Anything, slotID)
 
 	mockBookingRepo.AssertExpectations(t)
 	mockSlotRepo.AssertExpectations(t)
@@ -440,11 +440,54 @@ func TestBookingService_Create_DBError(t *testing.T) {
 	mockEtRepo.On("GetByID", mock.Anything, eventTypeID).Return(eventType, nil)
 	mockSlotRepo.On("GetByID", mock.Anything, slotID).Return(slot, nil)
 	mockBookingRepo.On("CheckOverlap", mock.Anything, slot.StartTime, slot.EndTime).Return(false, nil)
-	mockBookingRepo.On("Create", mock.Anything, mock.Anything).Return(fmt.Errorf("database error"))
+	mockBookingRepo.On("CreateWithReservedSlot", mock.Anything, mock.Anything).Return(fmt.Errorf("database error"))
 
 	result, err := service.Create(context.Background(), req)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "database error")
+	mockSlotRepo.AssertNotCalled(t, "MarkAsUnavailable", mock.Anything, slotID)
+}
+
+func TestBookingService_Create_AtomicReservationFailure(t *testing.T) {
+	mockBookingRepo := new(MockBookingRepository)
+	mockSlotRepo := new(MockTimeSlotRepository)
+	mockEtRepo := new(MockEventTypeRepository)
+
+	service := NewBookingService(mockBookingRepo, mockSlotRepo, mockEtRepo)
+
+	slotID := "test-slot-id"
+	eventTypeID := "test-event-type-id"
+	req := models.CreateBookingRequest{
+		EventTypeID: eventTypeID,
+		SlotID:      &slotID,
+		GuestName:   "John Doe",
+		GuestEmail:  "john@example.com",
+	}
+
+	futureTime := time.Now().Add(24 * time.Hour)
+	slot := &models.TimeSlot{
+		ID:          slotID,
+		StartTime:   futureTime,
+		EndTime:     futureTime.Add(30 * time.Minute),
+		IsAvailable: true,
+	}
+
+	eventType := &models.EventType{ID: eventTypeID}
+
+	mockEtRepo.On("GetByID", mock.Anything, eventTypeID).Return(eventType, nil)
+	mockSlotRepo.On("GetByID", mock.Anything, slotID).Return(slot, nil)
+	mockBookingRepo.On("CheckOverlap", mock.Anything, slot.StartTime, slot.EndTime).Return(false, nil)
+	mockBookingRepo.On("CreateWithReservedSlot", mock.Anything, mock.Anything).Return(fmt.Errorf("slot reservation failed"))
+
+	result, err := service.Create(context.Background(), req)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "slot reservation failed")
+	mockSlotRepo.AssertNotCalled(t, "MarkAsUnavailable", mock.Anything, slotID)
+	mockBookingRepo.AssertExpectations(t)
+	mockSlotRepo.AssertExpectations(t)
+	mockEtRepo.AssertExpectations(t)
 }

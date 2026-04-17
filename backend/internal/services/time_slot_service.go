@@ -134,9 +134,7 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID, eventTypeI
 		if err != nil {
 			return nil, fmt.Errorf("invalid date_from format: %w", err)
 		}
-		if parsed.Before(dateFrom) {
-			dateFrom = dateFrom
-		} else {
+		if !parsed.Before(dateFrom) {
 			dateFrom = parsed
 		}
 	}
@@ -200,16 +198,14 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID, eventTypeI
 		return nil, fmt.Errorf("failed to save slot generation config: %w", err)
 	}
 
+	windowStart := time.Date(dateFrom.Year(), dateFrom.Month(), dateFrom.Day(), 0, 0, 0, 0, loc)
+	windowEnd := time.Date(dateTo.Year(), dateTo.Month(), dateTo.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, 1)
+	if err := s.repo.DeleteAvailableInRange(ctx, ownerID, eventTypeID, windowStart.UTC(), windowEnd.UTC()); err != nil {
+		return nil, fmt.Errorf("failed to clear existing slots: %w", err)
+	}
+
 	slotsCreated := 0
 	slotsSkipped := 0
-	existingSlots, _, err := s.repo.List(ctx, ownerID, eventTypeID, 1, 100000, nil, nil, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load existing slots: %w", err)
-	}
-	existing := make(map[string]struct{}, len(existingSlots))
-	for _, slot := range existingSlots {
-		existing[slot.StartTime.UTC().Format(time.RFC3339)+"|"+slot.EndTime.UTC().Format(time.RFC3339)] = struct{}{}
-	}
 
 	// Calculate slots for each day
 	currentDate := dateFrom
@@ -231,13 +227,6 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID, eventTypeI
 					break
 				}
 
-				key := slotStart.UTC().Format(time.RFC3339) + "|" + slotEnd.UTC().Format(time.RFC3339)
-				if _, exists := existing[key]; exists {
-					slotsSkipped++
-					slotStart = slotStart.Add(time.Duration(intervalMinutes) * time.Minute)
-					continue
-				}
-
 				// Create the slot in the database (times are automatically converted to UTC)
 				slot := &models.TimeSlot{
 					OwnerID:     ownerID,
@@ -250,8 +239,6 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID, eventTypeI
 				if err := s.repo.Create(ctx, slot); err != nil {
 					return nil, fmt.Errorf("failed to create slot at %s: %w", slotStart.Format(time.RFC3339), err)
 				}
-
-				existing[key] = struct{}{}
 				slotsCreated++
 
 				slotStart = slotStart.Add(time.Duration(intervalMinutes) * time.Minute)

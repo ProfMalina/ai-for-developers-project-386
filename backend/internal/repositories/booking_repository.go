@@ -47,6 +47,59 @@ func (r *BookingRepository) Create(ctx context.Context, booking *models.Booking)
 	return nil
 }
 
+// CreateWithReservedSlot atomically reserves a slot and creates a booking.
+func (r *BookingRepository) CreateWithReservedSlot(ctx context.Context, booking *models.Booking) error {
+	if booking.SlotID == nil {
+		return r.Create(ctx, booking)
+	}
+
+	if booking.ID == "" {
+		booking.ID = uuid.New().String()
+	}
+
+	if booking.Status == "" {
+		booking.Status = "confirmed"
+	}
+
+	tx, err := db.Pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin booking transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	reserveQuery := `UPDATE time_slots SET is_available = false WHERE id = $1 AND is_available = true`
+	result, err := tx.Exec(ctx, reserveQuery, *booking.SlotID)
+	if err != nil {
+		return fmt.Errorf("failed to reserve time slot: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("time slot is already booked")
+	}
+
+	createQuery := `
+		INSERT INTO bookings (id, event_type_id, slot_id, guest_name, guest_email, timezone, start_time, end_time, status, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+		RETURNING id, created_at
+	`
+
+	err = tx.QueryRow(ctx, createQuery, booking.ID, booking.EventTypeID, booking.SlotID,
+		booking.GuestName, booking.GuestEmail, booking.Timezone, booking.StartTime, booking.EndTime, booking.Status).
+		Scan(&booking.ID, &booking.CreatedAt)
+	if err != nil {
+		if strings.Contains(err.Error(), "overlaps") {
+			return fmt.Errorf("selected time slot is already booked")
+		}
+		return fmt.Errorf("failed to create booking: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit booking transaction: %w", err)
+	}
+
+	return nil
+}
+
 // GetByID retrieves a booking by ID
 func (r *BookingRepository) GetByID(ctx context.Context, id string) (*models.Booking, error) {
 	query := `

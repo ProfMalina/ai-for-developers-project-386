@@ -160,6 +160,37 @@ func (r *TimeSlotRepository) MarkAsUnavailable(ctx context.Context, id string) e
 	return nil
 }
 
+// DeleteAvailableInRange deletes available slots for an owner and event type in a time range
+func (r *TimeSlotRepository) DeleteAvailableInRange(ctx context.Context, ownerID, eventTypeID string, startTime, endTime time.Time) error {
+	query, args := buildDeleteAvailableInRangeQuery(ownerID, eventTypeID, startTime, endTime)
+
+	_, err := db.Pool.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to delete available time slots in range: %w", err)
+	}
+
+	return nil
+}
+
+func buildDeleteAvailableInRangeQuery(ownerID, eventTypeID string, startTime, endTime time.Time) (string, []interface{}) {
+	query := `
+		DELETE FROM time_slots
+		WHERE owner_id = $1
+		AND (event_type_id = $2 OR event_type_id IS NULL)
+		AND is_available = true
+		AND start_time < $4
+		AND end_time > $3
+		AND NOT EXISTS (
+			SELECT 1 FROM bookings b
+			WHERE b.slot_id = time_slots.id
+			AND b.status != 'cancelled'
+		)
+	`
+
+	args := []interface{}{ownerID, eventTypeID, startTime, endTime}
+	return query, args
+}
+
 // Delete deletes a time slot
 func (r *TimeSlotRepository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM time_slots WHERE id = $1`
