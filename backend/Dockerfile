@@ -26,7 +26,7 @@ WORKDIR /root/
 # Copy the binary from builder
 COPY --from=builder /app/main .
 COPY --from=builder /app/migrations ./migrations
-COPY --from=builder /app/.env .
+COPY --from=builder /app/.env.example ./.env
 
 ENV PORT=8080
 EXPOSE 8080
