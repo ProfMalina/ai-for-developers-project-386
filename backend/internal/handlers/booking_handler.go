@@ -3,6 +3,8 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/repositories"
 	"github.com/ProfMalina/ai-for-developers-project-386/backend/internal/services"
@@ -29,15 +31,30 @@ func NewBookingHandler() *BookingHandler {
 func (h *BookingHandler) List(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
-	sortBy := c.DefaultQuery("sortBy", "created_at")
-	sortOrder := c.DefaultQuery("sortOrder", "desc")
+	sortBy := c.DefaultQuery("sortBy", "startTime")
+	sortOrder := c.DefaultQuery("sortOrder", "asc")
 
-	var status *string
-	if s := c.Query("status"); s != "" {
-		status = &s
+	var dateFrom *time.Time
+	if raw := c.Query("dateFrom"); raw != "" {
+		parsed, err := time.Parse(time.RFC3339, raw)
+		if err != nil {
+			BadRequest(c, "dateFrom must be RFC3339")
+			return
+		}
+		dateFrom = &parsed
 	}
 
-	result, err := h.service.List(c.Request.Context(), page, pageSize, sortBy, sortOrder, status)
+	var dateTo *time.Time
+	if raw := c.Query("dateTo"); raw != "" {
+		parsed, err := time.Parse(time.RFC3339, raw)
+		if err != nil {
+			BadRequest(c, "dateTo must be RFC3339")
+			return
+		}
+		dateTo = &parsed
+	}
+
+	result, err := h.service.List(c.Request.Context(), page, pageSize, sortBy, sortOrder, dateFrom, dateTo)
 	if err != nil {
 		BadRequest(c, "Failed to list bookings: "+err.Error())
 		return
@@ -65,6 +82,10 @@ func (h *BookingHandler) Cancel(c *gin.Context) {
 
 	err := h.service.Cancel(c.Request.Context(), id)
 	if err != nil {
+		if strings.Contains(err.Error(), "already cancelled") {
+			BadRequest(c, err.Error())
+			return
+		}
 		NotFound(c, "Booking")
 		return
 	}

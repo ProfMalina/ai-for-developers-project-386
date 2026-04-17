@@ -82,7 +82,7 @@ func main() {
 		api.DELETE("/event-types/:id", eventTypeHandler.Delete)
 
 		// Slot generation
-		api.POST("/slots/generate", timeSlotHandler.GenerateSlots)
+		api.POST("/event-types/:eventTypeId/slots/generate", timeSlotHandler.GenerateSlots)
 
 		// Slots
 		api.GET("/slots", timeSlotHandler.List)

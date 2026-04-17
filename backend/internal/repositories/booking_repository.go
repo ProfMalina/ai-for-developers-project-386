@@ -71,22 +71,37 @@ func (r *BookingRepository) GetByID(ctx context.Context, id string) (*models.Boo
 }
 
 // List retrieves a paginated list of bookings with filters and sorting
-func (r *BookingRepository) List(ctx context.Context, page, pageSize int, sortBy, sortOrder string, status *string) ([]models.Booking, int, error) {
+func (r *BookingRepository) List(ctx context.Context, page, pageSize int, sortBy, sortOrder string, dateFrom, dateTo *time.Time) ([]models.Booking, int, error) {
 	if sortBy == "" {
-		sortBy = "created_at"
+		sortBy = "start_time"
 	}
 	if sortOrder == "" {
-		sortOrder = "desc"
+		sortOrder = "asc"
 	}
 
 	allowedSortFields := map[string]bool{
-		"created_at": true, "start_time": true, "guest_name": true, "status": true,
+		"created_at": true,
+		"createdAt":  true,
+		"start_time": true,
+		"startTime":  true,
+		"guest_name": true,
+		"guestName":  true,
+		"status":     true,
 	}
 	if !allowedSortFields[sortBy] {
-		sortBy = "created_at"
+		sortBy = "start_time"
 	}
 	if sortOrder != "asc" && sortOrder != "desc" {
-		sortOrder = "desc"
+		sortOrder = "asc"
+	}
+
+	sortFieldMap := map[string]string{
+		"createdAt": "created_at",
+		"startTime": "start_time",
+		"guestName": "guest_name",
+	}
+	if mapped, ok := sortFieldMap[sortBy]; ok {
+		sortBy = mapped
 	}
 
 	offset := (page - 1) * pageSize
@@ -96,10 +111,17 @@ func (r *BookingRepository) List(ctx context.Context, page, pageSize int, sortBy
 	args := []interface{}{}
 	argIdx := 1
 
-	if status != nil {
-		query += fmt.Sprintf(" AND status = $%d", argIdx)
-		countQuery += fmt.Sprintf(" AND status = $%d", argIdx)
-		args = append(args, *status)
+	if dateFrom != nil {
+		query += fmt.Sprintf(" AND start_time >= $%d", argIdx)
+		countQuery += fmt.Sprintf(" AND start_time >= $%d", argIdx)
+		args = append(args, *dateFrom)
+		argIdx++
+	}
+
+	if dateTo != nil {
+		query += fmt.Sprintf(" AND end_time <= $%d", argIdx)
+		countQuery += fmt.Sprintf(" AND end_time <= $%d", argIdx)
+		args = append(args, *dateTo)
 		argIdx++
 	}
 

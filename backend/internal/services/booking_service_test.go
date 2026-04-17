@@ -276,10 +276,10 @@ func TestBookingService_List_Success(t *testing.T) {
 		{ID: "2", GuestName: "Jane"},
 	}
 
-	mockBookingRepo.On("List", mock.Anything, 1, 20, "created_at", "desc", (*string)(nil)).
+	mockBookingRepo.On("List", mock.Anything, 1, 20, "created_at", "desc", (*time.Time)(nil), (*time.Time)(nil)).
 		Return(bookings, 2, nil)
 
-	result, err := service.List(context.Background(), 1, 20, "created_at", "desc", nil)
+	result, err := service.List(context.Background(), 1, 20, "created_at", "desc", nil, nil)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -297,11 +297,11 @@ func TestBookingService_List_DefaultPagination(t *testing.T) {
 	service := NewBookingService(mockBookingRepo, mockSlotRepo, mockEtRepo)
 
 	// Service passes empty strings for sortBy/sortOrder when not provided - repository sets defaults
-	mockBookingRepo.On("List", mock.Anything, 1, 20, "", "", (*string)(nil)).
+	mockBookingRepo.On("List", mock.Anything, 1, 20, "", "", (*time.Time)(nil), (*time.Time)(nil)).
 		Return([]models.Booking{}, 0, nil)
 
 	// Test with invalid page and pageSize
-	result, err := service.List(context.Background(), 0, 0, "", "", nil)
+	result, err := service.List(context.Background(), 0, 0, "", "", nil, nil)
 
 	require.NoError(t, err)
 	assert.NotNil(t, result)
@@ -392,19 +392,19 @@ func TestBookingService_Create_NoSlotID(t *testing.T) {
 	assert.Contains(t, err.Error(), "slot ID is required")
 }
 
-// Table-driven test for CalculatePagination (already tested in owner_service_test.go)
-func TestBookingService_List_WithStatusFilter(t *testing.T) {
+func TestBookingService_List_WithDateFilters(t *testing.T) {
 	mockBookingRepo := new(MockBookingRepository)
 	mockSlotRepo := new(MockTimeSlotRepository)
 	mockEtRepo := new(MockEventTypeRepository)
 
 	service := NewBookingService(mockBookingRepo, mockSlotRepo, mockEtRepo)
 
-	status := "confirmed"
-	mockBookingRepo.On("List", mock.Anything, 1, 20, "created_at", "desc", &status).
+	dateFrom := time.Now().Add(-time.Hour)
+	dateTo := time.Now().Add(time.Hour)
+	mockBookingRepo.On("List", mock.Anything, 1, 20, "created_at", "desc", &dateFrom, &dateTo).
 		Return([]models.Booking{}, 0, nil)
 
-	result, err := service.List(context.Background(), 1, 20, "created_at", "desc", &status)
+	result, err := service.List(context.Background(), 1, 20, "created_at", "desc", &dateFrom, &dateTo)
 
 	require.NoError(t, err)
 	assert.NotNil(t, result)

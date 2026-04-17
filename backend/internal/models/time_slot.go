@@ -6,6 +6,7 @@ import "time"
 type TimeSlot struct {
 	ID          string    `json:"id"`
 	OwnerID     string    `json:"ownerId"`
+	EventTypeID string    `json:"eventTypeId,omitempty"`
 	StartTime   time.Time `json:"startTime"`
 	EndTime     time.Time `json:"endTime"`
 	IsAvailable bool      `json:"isAvailable"`
@@ -38,8 +39,8 @@ type SlotGenerationConfig struct {
 type SlotGenerationRequest struct {
 	WorkingHoursStart string  `json:"workingHoursStart" binding:"required,datetime=15:04"`
 	WorkingHoursEnd   string  `json:"workingHoursEnd" binding:"required,datetime=15:04"`
-	IntervalMinutes   int     `json:"intervalMinutes" binding:"required,oneof=15 30"`
-	DaysOfWeek        []int   `json:"daysOfWeek" binding:"required"`
+	IntervalMinutes   int     `json:"intervalMinutes" binding:"omitempty,oneof=15 30"`
+	DaysOfWeek        []int   `json:"daysOfWeek" binding:"omitempty"`
 	DateFrom          string  `json:"dateFrom" binding:"omitempty,datetime=2006-01-02"`
 	DateTo            string  `json:"dateTo" binding:"omitempty,datetime=2006-01-02"`
 	Timezone          *string `json:"timezone,omitempty"`
@@ -47,6 +48,8 @@ type SlotGenerationRequest struct {
 
 // SlotGenerationResult represents the response from slot generation
 type SlotGenerationResult struct {
-	SlotsCreated   int      `json:"slotsCreated"`
-	CreatedSlotIDs []string `json:"createdSlotIds"`
+	SlotsCreated int    `json:"slotsCreated"`
+	SlotsSkipped int    `json:"slotsSkipped"`
+	DateFrom     string `json:"dateFrom"`
+	DateTo       string `json:"dateTo"`
 }

@@ -26,8 +26,8 @@ func (m *MockBookingRepository) GetByID(ctx context.Context, id string) (*models
 	return args.Get(0).(*models.Booking), args.Error(1)
 }
 
-func (m *MockBookingRepository) List(ctx context.Context, page, pageSize int, sortBy, sortOrder string, status *string) ([]models.Booking, int, error) {
-	args := m.Called(ctx, page, pageSize, sortBy, sortOrder, status)
+func (m *MockBookingRepository) List(ctx context.Context, page, pageSize int, sortBy, sortOrder string, dateFrom, dateTo *time.Time) ([]models.Booking, int, error) {
+	args := m.Called(ctx, page, pageSize, sortBy, sortOrder, dateFrom, dateTo)
 	if args.Get(0) == nil {
 		return nil, args.Int(1), args.Error(2)
 	}
@@ -67,8 +67,8 @@ func (m *MockTimeSlotRepository) GetByID(ctx context.Context, id string) (*model
 	return args.Get(0).(*models.TimeSlot), args.Error(1)
 }
 
-func (m *MockTimeSlotRepository) List(ctx context.Context, ownerID string, page, pageSize int, available *bool, startTime, endTime *time.Time) ([]models.TimeSlot, int, error) {
-	args := m.Called(ctx, ownerID, page, pageSize, available, startTime, endTime)
+func (m *MockTimeSlotRepository) List(ctx context.Context, ownerID, eventTypeID string, page, pageSize int, available *bool, startTime, endTime *time.Time) ([]models.TimeSlot, int, error) {
+	args := m.Called(ctx, ownerID, eventTypeID, page, pageSize, available, startTime, endTime)
 	if args.Get(0) == nil {
 		return nil, args.Int(1), args.Error(2)
 	}

@@ -23,8 +23,8 @@ func NewTimeSlotRepository() *TimeSlotRepository {
 // Create creates a new time slot
 func (r *TimeSlotRepository) Create(ctx context.Context, slot *models.TimeSlot) error {
 	query := `
-		INSERT INTO time_slots (id, owner_id, start_time, end_time, is_available, created_at)
-		VALUES ($1, $2, $3, $4, $5, NOW())
+		INSERT INTO time_slots (id, owner_id, event_type_id, start_time, end_time, is_available, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW())
 		RETURNING id, created_at
 	`
 
@@ -32,7 +32,7 @@ func (r *TimeSlotRepository) Create(ctx context.Context, slot *models.TimeSlot) 
 		slot.ID = uuid.New().String()
 	}
 
-	err := db.Pool.QueryRow(ctx, query, slot.ID, slot.OwnerID, slot.StartTime, slot.EndTime, slot.IsAvailable).
+	err := db.Pool.QueryRow(ctx, query, slot.ID, slot.OwnerID, slot.EventTypeID, slot.StartTime, slot.EndTime, slot.IsAvailable).
 		Scan(&slot.ID, &slot.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("failed to create time slot: %w", err)
@@ -43,11 +43,11 @@ func (r *TimeSlotRepository) Create(ctx context.Context, slot *models.TimeSlot) 
 
 // GetByID retrieves a time slot by ID
 func (r *TimeSlotRepository) GetByID(ctx context.Context, id string) (*models.TimeSlot, error) {
-	query := `SELECT id, owner_id, start_time, end_time, is_available, created_at FROM time_slots WHERE id = $1`
+	query := `SELECT id, owner_id, COALESCE(event_type_id::text, ''), start_time, end_time, is_available, created_at FROM time_slots WHERE id = $1`
 
 	slot := &models.TimeSlot{}
 	err := db.Pool.QueryRow(ctx, query, id).Scan(
-		&slot.ID, &slot.OwnerID, &slot.StartTime, &slot.EndTime, &slot.IsAvailable, &slot.CreatedAt,
+		&slot.ID, &slot.OwnerID, &slot.EventTypeID, &slot.StartTime, &slot.EndTime, &slot.IsAvailable, &slot.CreatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -60,18 +60,25 @@ func (r *TimeSlotRepository) GetByID(ctx context.Context, id string) (*models.Ti
 }
 
 // List retrieves a paginated list of time slots with filters
-func (r *TimeSlotRepository) List(ctx context.Context, eventTypeID string, page, pageSize int, available *bool, startTime, endTime *time.Time) ([]models.TimeSlot, int, error) {
+func (r *TimeSlotRepository) List(ctx context.Context, ownerID, eventTypeID string, page, pageSize int, available *bool, startTime, endTime *time.Time) ([]models.TimeSlot, int, error) {
 	offset := (page - 1) * pageSize
 
 	// Build query dynamically based on filters
-	query := `SELECT id, owner_id, start_time, end_time, is_available, created_at FROM time_slots WHERE 1=1`
+	query := `SELECT id, owner_id, COALESCE(event_type_id::text, ''), start_time, end_time, is_available, created_at FROM time_slots WHERE 1=1`
 	countQuery := `SELECT COUNT(*) FROM time_slots WHERE 1=1`
 	args := []interface{}{}
 	argIdx := 1
 
-	if eventTypeID != "" {
+	if ownerID != "" {
 		query += fmt.Sprintf(" AND owner_id = $%d", argIdx)
 		countQuery += fmt.Sprintf(" AND owner_id = $%d", argIdx)
+		args = append(args, ownerID)
+		argIdx++
+	}
+
+	if eventTypeID != "" {
+		query += fmt.Sprintf(" AND event_type_id = $%d", argIdx)
+		countQuery += fmt.Sprintf(" AND event_type_id = $%d", argIdx)
 		args = append(args, eventTypeID)
 		argIdx++
 	}
@@ -117,7 +124,7 @@ func (r *TimeSlotRepository) List(ctx context.Context, eventTypeID string, page,
 	var slots []models.TimeSlot
 	for rows.Next() {
 		var slot models.TimeSlot
-		err := rows.Scan(&slot.ID, &slot.OwnerID, &slot.StartTime, &slot.EndTime, &slot.IsAvailable, &slot.CreatedAt)
+		err := rows.Scan(&slot.ID, &slot.OwnerID, &slot.EventTypeID, &slot.StartTime, &slot.EndTime, &slot.IsAvailable, &slot.CreatedAt)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to scan time slot: %w", err)
 		}
@@ -134,7 +141,7 @@ func (r *TimeSlotRepository) List(ctx context.Context, eventTypeID string, page,
 // GetAvailableSlots retrieves available slots for an event type
 func (r *TimeSlotRepository) GetAvailableSlots(ctx context.Context, eventTypeID string, page, pageSize int, startTime, endTime *time.Time) ([]models.TimeSlot, int, error) {
 	available := true
-	return r.List(ctx, eventTypeID, page, pageSize, &available, startTime, endTime)
+	return r.List(ctx, eventTypeID, "", page, pageSize, &available, startTime, endTime)
 }
 
 // MarkAsUnavailable marks a slot as unavailable (booked)

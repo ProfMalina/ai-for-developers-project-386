@@ -25,6 +25,7 @@ func NewPublicEventTypeHandler() *PublicEventTypeHandler {
 			repositories.NewTimeSlotRepository(),
 			repositories.NewSlotGenerationConfigRepository(),
 			repositories.NewOwnerRepository(),
+			repositories.NewEventTypeRepository(),
 		),
 	}
 }
