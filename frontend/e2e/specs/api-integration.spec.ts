@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { BookingPage } from '../pages/BookingPage';
 import { OwnerDashboard } from '../pages/OwnerDashboard';
-import { testEventTypes, testBooking } from '../fixtures/test-data';
+import { testBooking } from '../fixtures/test-data';
 
 test.describe('API Integration & Error Handling', () => {
   test.describe('API Response Handling', () => {
@@ -269,7 +269,7 @@ test.describe('API Integration & Error Handling', () => {
 
     test('should handle API unavailable', async ({ page }) => {
       // Simulate timeout - don't respond
-      await page.route('**/api/**', async route => {
+      await page.route('**/api/**', async () => {
         // Don't respond at all - simulate hanging server
       });
 

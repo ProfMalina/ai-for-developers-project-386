@@ -90,7 +90,7 @@ test.describe('Owner Management Flow', () => {
     await page.unroute('**/api/**');
   });
 
-  test('should view owner dashboard', async ({ page }) => {
+  test('should view owner dashboard', async () => {
     await dashboard.goto();
     await dashboard.expectLoaded();
   });
@@ -203,7 +203,6 @@ test.describe('Owner Management Flow', () => {
     });
 
     await page.route('**/api/event-types', async route => {
-      const url = route.request().url();
       const method = route.request().method();
       if (method === 'DELETE') {
         await route.fulfill({

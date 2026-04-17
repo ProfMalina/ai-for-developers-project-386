@@ -11,11 +11,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
+      reportOnFailure: true,
       thresholds: {
-        lines: 45,
-        branches: 30,
-        functions: 40,
-        statements: 45,
+        lines: 80,
+        branches: 70,
+        functions: 80,
+        statements: 80,
       },
       include: [
         'src/**/*.ts',

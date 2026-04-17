@@ -1,62 +1,121 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { render, screen } from '@/test/test-utils';
+import { server } from '@/test/mocks';
 import { BookingsList } from '@/components/owner/BookingsList';
 
-describe('BookingsList Component', () => {
-  it('should render component title', async () => {
-    render(<BookingsList />);
-    const title = await screen.findByText(/Список бронирований/i);
-    expect(title).toBeInTheDocument();
+const createBookingAtOffset = (daysOffset: number) => {
+  const start = new Date();
+  start.setUTCDate(start.getUTCDate() + daysOffset);
+  start.setUTCHours(10, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setUTCMinutes(end.getUTCMinutes() + 30);
+
+  const createdAt = new Date();
+  createdAt.setUTCHours(8, 0, 0, 0);
+
+  return {
+    id: `booking-${daysOffset}`,
+    eventTypeId: 'event-type-1',
+    startTime: start.toISOString(),
+    endTime: end.toISOString(),
+    guestName: 'Иван Иванов',
+    guestEmail: 'ivan@example.com',
+    createdAt: createdAt.toISOString(),
+  };
+};
+
+describe('BookingsList', () => {
+  beforeEach(() => {
+    server.resetHandlers();
   });
 
-  it('should render bookings from API', async () => {
+  it('renders upcoming booking details', async () => {
     render(<BookingsList />);
-    const guestName = await screen.findByText('Иван Иванов');
-    expect(guestName).toBeInTheDocument();
+
+    expect(await screen.findByText('Иван Иванов')).toBeInTheDocument();
+    expect(screen.getByText('ivan@example.com')).toBeInTheDocument();
+    expect(screen.getByText(/Предстоящая/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Отменить бронирование/i })).toBeEnabled();
   });
 
-  it('should display booking email', async () => {
+  it('shows empty state when there are no bookings', async () => {
+    server.use(
+      http.get('*/api/bookings', () =>
+        HttpResponse.json({
+          items: [],
+          pagination: {
+            page: 1,
+            pageSize: 10,
+            totalItems: 0,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          },
+        })
+      )
+    );
+
     render(<BookingsList />);
-    const email = await screen.findByText('ivan@example.com');
-    expect(email).toBeInTheDocument();
+
+    expect(await screen.findByText(/Бронирований пока нет/i)).toBeInTheDocument();
   });
 
-  it('should display cancel button for upcoming bookings', async () => {
+  it('disables cancellation for past bookings', async () => {
+    server.use(
+      http.get('*/api/bookings', () =>
+        HttpResponse.json({
+          items: [createBookingAtOffset(-1)],
+          pagination: {
+            page: 1,
+            pageSize: 10,
+            totalItems: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          },
+        })
+      )
+    );
+
     render(<BookingsList />);
-    const cancelButton = await screen.findByText(/Отменить бронирование/i);
-    expect(cancelButton).toBeInTheDocument();
+
+    expect(await screen.findByText(/Прошедшая/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Отменить бронирование/i })).toBeDisabled();
   });
 
-  it('should display booking time information', async () => {
+  it('cancels booking after confirmation', async () => {
+    const user = userEvent.setup();
     render(<BookingsList />);
+
     await screen.findByText('Иван Иванов');
+    await user.click(screen.getByRole('button', { name: /Отменить бронирование/i }));
+    await user.click(await screen.findByRole('button', { name: /Да, отменить/i }));
 
-    const timeLabel = screen.getByText(/Время:/i);
-    expect(timeLabel).toBeInTheDocument();
+    expect(await screen.findByText(/Бронирование отменено/i)).toBeInTheDocument();
   });
 
-  it('should display event type ID', async () => {
+  it('renders pagination when multiple pages exist', async () => {
+    server.use(
+      http.get('*/api/bookings', () =>
+        HttpResponse.json({
+          items: [createBookingAtOffset(1)],
+          pagination: {
+            page: 1,
+            pageSize: 10,
+            totalItems: 25,
+            totalPages: 3,
+            hasNext: true,
+            hasPrev: false,
+          },
+        })
+      )
+    );
+
     render(<BookingsList />);
-    await screen.findByText('Иван Иванов');
 
-    const idLabel = screen.getByText(/ID типа встречи:/i);
-    expect(idLabel).toBeInTheDocument();
-  });
-
-  it('should display booking creation date', async () => {
-    render(<BookingsList />);
-    await screen.findByText('Иван Иванов');
-
-    const createdLabel = screen.getByText(/Создано:/i);
-    expect(createdLabel).toBeInTheDocument();
-  });
-
-  it('should display status badge', async () => {
-    render(<BookingsList />);
-    await screen.findByText('Иван Иванов');
-
-    // Badge should show either "Предстоящая" or "Прошедшая"
-    const badges = screen.getAllByText(/Предстоящая|Прошедшая/i);
-    expect(badges.length).toBeGreaterThan(0);
+    expect(await screen.findByRole('button', { name: '2' })).toBeInTheDocument();
   });
 });

@@ -13,11 +13,11 @@ test.describe('Guest Booking Flow', () => {
     // No mocking - use real backend on port 8081
   });
 
-  test.afterEach(async ({ page }) => {
+  test.afterEach(async () => {
     // No unroute needed since we're not mocking
   });
 
-  test('should view event types list on guest home page', async ({ page }) => {
+  test('should view event types list on guest home page', async () => {
     await guestHome.goto();
     await guestHome.expectLoaded();
 
@@ -27,7 +27,7 @@ test.describe('Guest Booking Flow', () => {
     }
   });
 
-  test('should select event type and view calendar', async ({ page }) => {
+  test('should select event type and view calendar', async () => {
     await guestHome.goto();
     await guestHome.expectLoaded();
 

@@ -78,8 +78,8 @@ export class BasePage {
   /**
    * Click element by role
    */
-  async clickByRole(role: string, name: string | RegExp): Promise<void> {
-    await this.page.getByRole(role as any, { name }).click();
+  async clickByRole(role: Parameters<Page['getByRole']>[0], name: string | RegExp): Promise<void> {
+    await this.page.getByRole(role, { name }).click();
   }
 
   /**

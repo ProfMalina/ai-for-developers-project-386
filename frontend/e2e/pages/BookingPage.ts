@@ -133,7 +133,7 @@ export class BookingPage extends BasePage {
   /**
    * Verify form validation error
    */
-  async expectValidationError(field: 'name' | 'email', message: string): Promise<void> {
+  async expectValidationError(field: 'name' | 'email'): Promise<void> {
     const errorElement = field === 'name'
       ? this.page.getByText(/имя обязательно/i)
       : this.page.getByText(/некорректный email/i);

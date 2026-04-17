@@ -1,63 +1,116 @@
-import { describe, it, expect } from 'vitest';
+import type { ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { render, screen } from '@/test/test-utils';
+import { server } from '@/test/mocks';
 import { EventTypeManagement } from '@/components/owner/EventTypeManagement';
 
-describe('EventTypeManagement Component', () => {
-  it('should render component title', async () => {
-    render(<EventTypeManagement />);
-    const title = await screen.findByText(/Управление типами встреч/i);
-    expect(title).toBeInTheDocument();
+vi.mock('@mantine/core', async () => {
+  const actual = await vi.importActual<typeof import('@mantine/core')>('@mantine/core');
+  return {
+    ...actual,
+    Modal: ({ opened, title, children }: { opened: boolean; title: string; children: ReactNode }) => (
+      opened ? <div role="dialog" aria-label={title}>{children}</div> : null
+    ),
+  };
+});
+
+describe('EventTypeManagement', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('should render add button', async () => {
+  it('renders fetched event types', async () => {
     render(<EventTypeManagement />);
-    const addButton = await screen.findByText(/Добавить тип встречи/i);
-    expect(addButton).toBeInTheDocument();
+
+    expect(await screen.findByText('Консультация')).toBeInTheDocument();
+    expect(screen.getByText('Встреча')).toBeInTheDocument();
+    expect(screen.getByText(/Индивидуальная консультация по проекту/i)).toBeInTheDocument();
   });
 
-  it('should render event types from API', async () => {
+  it('shows empty state when there are no event types', async () => {
+    server.use(
+      http.get('*/api/event-types', () =>
+        HttpResponse.json({
+          items: [],
+          pagination: {
+            page: 1,
+            pageSize: 10,
+            totalItems: 0,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          },
+        })
+      )
+    );
+
     render(<EventTypeManagement />);
-    const eventType = await screen.findByText('Консультация');
-    expect(eventType).toBeInTheDocument();
+
+    expect(await screen.findByText(/Типы встреч еще не созданы/i)).toBeInTheDocument();
   });
 
-  it('should display event duration badges', async () => {
+  it('validates required fields when creating an event type', async () => {
+    const user = userEvent.setup();
     render(<EventTypeManagement />);
-    const badge = await screen.findByText(/30 мин/i);
-    expect(badge).toBeInTheDocument();
-  });
 
-  it('should show empty state when no event types', () => {
-    // This test would require mocking an empty response
-    // For now, we just verify the component renders
-    render(<EventTypeManagement />);
-    expect(true).toBe(true);
-  });
-
-  it('should render event descriptions', async () => {
-    render(<EventTypeManagement />);
-    const description = await screen.findByText(/Индивидуальная консультация по проекту/i);
-    expect(description).toBeInTheDocument();
-  });
-
-  it('should render edit and delete buttons for each event type', async () => {
-    render(<EventTypeManagement />);
     await screen.findByText('Консультация');
+    await user.click(screen.getByRole('button', { name: /Добавить тип встречи/i }));
+    await user.click(screen.getByRole('button', { name: /^Создать$/i }));
 
-    // Edit and delete icons should be present
-    const editButtons = screen.getAllByRole('button');
-    expect(editButtons.length).toBeGreaterThan(0);
+    expect(await screen.findByText(/Все поля обязательны для заполнения/i)).toBeInTheDocument();
   });
 
-  it('should display second event type', async () => {
+  it('creates a new event type successfully', async () => {
+    const user = userEvent.setup();
     render(<EventTypeManagement />);
-    const meetingType = await screen.findByText('Встреча');
-    expect(meetingType).toBeInTheDocument();
+
+    await screen.findByText('Консультация');
+    await user.click(screen.getByRole('button', { name: /Добавить тип встречи/i }));
+    await user.type(screen.getByLabelText(/Название/i), 'Стратегическая сессия');
+    await user.type(screen.getByLabelText(/Описание/i), 'Разбор целей и следующих шагов');
+    await user.clear(screen.getByLabelText(/Длительность/i));
+    await user.type(screen.getByLabelText(/Длительность/i), '45');
+    await user.click(screen.getByRole('button', { name: /^Создать$/i }));
+
+    expect(await screen.findByText(/Тип встречи создан/i)).toBeInTheDocument();
   });
 
-  it('should display 60 minutes badge for second event', async () => {
+  it('deletes an event type after confirmation', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
     render(<EventTypeManagement />);
-    const badge = await screen.findByText(/60 мин/i);
-    expect(badge).toBeInTheDocument();
+
+    await screen.findByText('Консультация');
+    await user.click(screen.getByLabelText(/Удалить тип встречи Консультация/i));
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(await screen.findByText(/Тип встречи удален/i)).toBeInTheDocument();
+  });
+
+  it('renders pagination when API returns multiple pages', async () => {
+    server.use(
+      http.get('*/api/event-types', () =>
+        HttpResponse.json({
+          items: [
+            { id: 'event-type-1', name: 'Консультация', description: 'Индивидуальная консультация по проекту', durationMinutes: 30 },
+          ],
+          pagination: {
+            page: 1,
+            pageSize: 10,
+            totalItems: 30,
+            totalPages: 3,
+            hasNext: true,
+            hasPrev: false,
+          },
+        })
+      )
+    );
+
+    render(<EventTypeManagement />);
+
+    expect(await screen.findByRole('button', { name: '2' })).toBeInTheDocument();
   });
 });

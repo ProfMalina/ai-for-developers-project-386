@@ -185,6 +185,7 @@ export function EventTypeManagement() {
                     </Text>
                     <Group justify="flex-end" mt="xs">
                       <ActionIcon
+                        aria-label={`Редактировать тип встречи ${eventType.name}`}
                         color="blue"
                         variant="subtle"
                         onClick={() => openEditModal(eventType)}
@@ -192,6 +193,7 @@ export function EventTypeManagement() {
                         <IconEdit size={18} />
                       </ActionIcon>
                       <ActionIcon
+                        aria-label={`Удалить тип встречи ${eventType.name}`}
                         color="red"
                         variant="subtle"
                         onClick={() => handleDelete(eventType.id)}

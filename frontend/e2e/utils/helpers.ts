@@ -17,8 +17,6 @@ export async function waitForPageLoad(page: Page): Promise<void> {
  */
 export async function selectDate(page: Page, date: Date): Promise<void> {
   const day = date.getDate();
-  const month = date.getMonth();
-  const year = date.getFullYear();
 
   // Click on the date input to open calendar
   await page.getByRole('textbox', { name: /дата/i }).click();
@@ -84,7 +82,7 @@ export async function switchLanguage(page: Page, language: 'ru' | 'en'): Promise
 /**
  * Switch theme (if theme switching is implemented)
  */
-export async function switchTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
+export async function switchTheme(page: Page): Promise<void> {
   const themeButton = page.getByRole('button', { name: /тема|theme/i });
   if (await themeButton.isVisible()) {
     await themeButton.click();

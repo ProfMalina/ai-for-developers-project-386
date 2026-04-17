@@ -9,6 +9,13 @@ import type {
   SlotGenerationResult,
 } from '../types/api';
 
+const createUtcDateAt = (daysFromNow: number, hours: number, minutes: number) => {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + daysFromNow);
+  date.setUTCHours(hours, minutes, 0, 0);
+  return date.toISOString();
+};
+
 // Mock data
 export const mockEventTypes: EventType[] = [
   {
@@ -29,15 +36,15 @@ export const mockTimeSlots: TimeSlot[] = [
   {
     id: 'slot-1',
     ownerId: 'owner-1',
-    startTime: '2026-04-08T10:00:00Z',
-    endTime: '2026-04-08T10:30:00Z',
+    startTime: createUtcDateAt(1, 10, 0),
+    endTime: createUtcDateAt(1, 10, 30),
     isAvailable: true,
   },
   {
     id: 'slot-2',
     ownerId: 'owner-1',
-    startTime: '2026-04-08T11:00:00Z',
-    endTime: '2026-04-08T11:30:00Z',
+    startTime: createUtcDateAt(1, 11, 0),
+    endTime: createUtcDateAt(1, 11, 30),
     isAvailable: true,
   },
 ];
@@ -45,11 +52,11 @@ export const mockTimeSlots: TimeSlot[] = [
 export const mockBooking: Booking = {
   id: 'booking-1',
   eventTypeId: 'event-type-1',
-  startTime: '2026-04-08T10:00:00Z',
-  endTime: '2026-04-08T10:30:00Z',
+  startTime: createUtcDateAt(1, 10, 0),
+  endTime: createUtcDateAt(1, 10, 30),
   guestName: 'Иван Иванов',
   guestEmail: 'ivan@example.com',
-  createdAt: '2026-04-07T12:00:00Z',
+  createdAt: createUtcDateAt(0, 12, 0),
 };
 
 export const createMockPaginatedResponse = <T>(

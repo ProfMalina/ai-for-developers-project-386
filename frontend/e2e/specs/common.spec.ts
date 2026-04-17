@@ -248,11 +248,11 @@ test.describe('Common Features', () => {
     });
 
     // Language switching not yet implemented per SPEC.MD
-    test.skip('should switch to English when language is changed', async ({ page }) => {
+    test.skip('should switch to English when language is changed', async () => {
       // Future implementation
     });
 
-    test.skip('should persist language preference across sessions', async ({ page }) => {
+    test.skip('should persist language preference across sessions', async () => {
       // Future implementation
     });
   });
