@@ -40,3 +40,34 @@ func TestBuildDeleteAvailableInRangeQuery_PreservesBookedSlotsAndAllowsLegacyNul
 		t.Fatalf("expected query to allow legacy NULL event_type_id rows, got %q", query)
 	}
 }
+
+func TestBuildGetAvailableSlotsQuery_ExcludesIntervalsWithActiveBookings(t *testing.T) {
+	startTime := time.Date(2026, 4, 20, 0, 0, 0, 0, time.UTC)
+	endTime := time.Date(2026, 4, 21, 0, 0, 0, 0, time.UTC)
+
+	query, args := buildGetAvailableSlotsQuery("owner-id", 1, 20, &startTime, &endTime)
+
+	if len(args) != 5 {
+		t.Fatalf("expected 5 query args, got %d", len(args))
+	}
+
+	if !strings.Contains(query, "owner_id = $1") {
+		t.Fatalf("expected available-slots query to filter by owner, got %q", query)
+	}
+
+	if !strings.Contains(query, "is_available = true") {
+		t.Fatalf("expected available-slots query to require available rows, got %q", query)
+	}
+
+	if !strings.Contains(query, "NOT EXISTS") || !strings.Contains(query, "FROM bookings b") {
+		t.Fatalf("expected available-slots query to exclude overlapping active bookings, got %q", query)
+	}
+
+	if !strings.Contains(query, "b.status != 'cancelled'") {
+		t.Fatalf("expected available-slots query to ignore cancelled bookings only, got %q", query)
+	}
+
+	if !strings.Contains(query, "b.start_time < time_slots.end_time") || !strings.Contains(query, "b.end_time > time_slots.start_time") {
+		t.Fatalf("expected overlap-based booking exclusion in available-slots query, got %q", query)
+	}
+}

@@ -79,3 +79,47 @@ func TestTimeSlotRepository_DeleteAvailableInRangePreservesBookedSlots(t *testin
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "time slot not found")
 }
+
+func TestTimeSlotRepository_GetAvailableSlots_ExcludesRegeneratedOverlapWithActiveBooking(t *testing.T) {
+	ctx := setupRepositoryTestDB(t)
+	owner := createTestOwner(t, ctx, "slot-public-overlap")
+	eventType := createTestEventType(t, ctx, owner.ID, "slot-public-overlap")
+
+	startTime := time.Date(2026, 4, 23, 9, 0, 0, 0, time.UTC)
+	bookedSlot := createTestTimeSlot(t, ctx, owner.ID, eventType.ID, startTime)
+
+	bookingRepo := NewBookingRepository()
+	booking := &models.Booking{
+		EventTypeID: eventType.ID,
+		SlotID:      &bookedSlot.ID,
+		GuestName:   "Booked Guest",
+		GuestEmail:  "booked@example.com",
+		Timezone:    func() *string { tz := "UTC"; return &tz }(),
+		StartTime:   bookedSlot.StartTime,
+		EndTime:     bookedSlot.EndTime,
+	}
+	require.NoError(t, bookingRepo.CreateWithReservedSlot(ctx, booking))
+
+	repo := NewTimeSlotRepository()
+	regeneratedSlot := &models.TimeSlot{
+		OwnerID:     owner.ID,
+		EventTypeID: eventType.ID,
+		StartTime:   bookedSlot.StartTime,
+		EndTime:     bookedSlot.EndTime,
+		IsAvailable: true,
+	}
+	require.NoError(t, repo.Create(ctx, regeneratedSlot))
+	require.NotEmpty(t, regeneratedSlot.ID)
+
+	available := true
+	allAvailable, availableTotal, err := repo.List(ctx, owner.ID, "", 1, 20, &available, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, 1, availableTotal)
+	require.Len(t, allAvailable, 1)
+	assert.Equal(t, regeneratedSlot.ID, allAvailable[0].ID)
+
+	items, total, err := repo.GetAvailableSlots(ctx, owner.ID, 1, 20, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, 0, total)
+	assert.Empty(t, items)
+}

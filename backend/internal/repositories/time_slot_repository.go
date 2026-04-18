@@ -139,9 +139,65 @@ func (r *TimeSlotRepository) List(ctx context.Context, ownerID, eventTypeID stri
 }
 
 // GetAvailableSlots retrieves available slots for an event type
-func (r *TimeSlotRepository) GetAvailableSlots(ctx context.Context, eventTypeID string, page, pageSize int, startTime, endTime *time.Time) ([]models.TimeSlot, int, error) {
-	available := true
-	return r.List(ctx, eventTypeID, "", page, pageSize, &available, startTime, endTime)
+func (r *TimeSlotRepository) GetAvailableSlots(ctx context.Context, ownerID string, page, pageSize int, startTime, endTime *time.Time) ([]models.TimeSlot, int, error) {
+	query, args := buildGetAvailableSlotsQuery(ownerID, page, pageSize, startTime, endTime)
+
+	rows, err := db.Pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list available time slots: %w", err)
+	}
+	defer rows.Close()
+
+	var slots []models.TimeSlot
+	for rows.Next() {
+		var slot models.TimeSlot
+		err := rows.Scan(&slot.ID, &slot.OwnerID, &slot.EventTypeID, &slot.StartTime, &slot.EndTime, &slot.IsAvailable, &slot.CreatedAt)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to scan available time slot: %w", err)
+		}
+		slots = append(slots, slot)
+	}
+
+	if slots == nil {
+		slots = []models.TimeSlot{}
+	}
+
+	return slots, len(slots), nil
+}
+
+func buildGetAvailableSlotsQuery(ownerID string, page, pageSize int, startTime, endTime *time.Time) (string, []interface{}) {
+	offset := (page - 1) * pageSize
+	query := `
+		SELECT id, owner_id, COALESCE(event_type_id::text, ''), start_time, end_time, is_available, created_at
+		FROM time_slots
+		WHERE owner_id = $1
+		AND is_available = true
+		AND NOT EXISTS (
+			SELECT 1 FROM bookings b
+			WHERE b.status != 'cancelled'
+			AND b.start_time < time_slots.end_time
+			AND b.end_time > time_slots.start_time
+		)
+	`
+	args := []interface{}{ownerID}
+	argIdx := 2
+
+	if startTime != nil {
+		query += fmt.Sprintf(" AND start_time >= $%d", argIdx)
+		args = append(args, *startTime)
+		argIdx++
+	}
+
+	if endTime != nil {
+		query += fmt.Sprintf(" AND end_time <= $%d", argIdx)
+		args = append(args, *endTime)
+		argIdx++
+	}
+
+	query += fmt.Sprintf(" ORDER BY start_time ASC LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+	args = append(args, pageSize, offset)
+
+	return query, args
 }
 
 // MarkAsUnavailable marks a slot as unavailable (booked)
