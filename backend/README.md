@@ -122,6 +122,15 @@ make backend-db-up
 
 # Stop database
 make backend-db-down
+
+# Check formatting
+make backend-fmt
+
+# Run quick local lint (go vet + optional golangci-lint when compatible)
+make backend-lint
+
+# Run strict local lint parity with CI when you have compatible golangci-lint installed
+make backend-lint-strict
 ```
 
 ## Database Migrations
@@ -131,6 +140,19 @@ Migrations are automatically applied on server startup from the `migrations/` di
 ## Testing
 
 ```bash
-# Run tests (when implemented)
-go test ./...
+# Start local PostgreSQL for repository integration tests
+make backend-db-up
+
+# Run all backend tests
+make backend-test
+
+# Run backend tests with coverage output
+make backend-test-coverage
+
+# Repository integration tests mutate their database. Always point them to an explicit test database.
+TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/booking_test_db?sslmode=disable go test ./...
 ```
+
+Repository integration tests are skipped when `TEST_DATABASE_URL` is unset, to avoid truncating a developer's default application database.
+
+Backend CI pins `golangci-lint` `v2.11.4`, runs PostgreSQL-backed backend tests, checks formatting, and enforces a backend coverage floor of 30%.

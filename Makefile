@@ -1,10 +1,11 @@
 .PHONY: help compile fmt fmt-check lint openapi clean install-dev dev backend-build backend-run backend-db-up backend-db-down backend-docker-build \
         docker-up docker-down docker-logs docker-build docker-rebuild frontend-test fronttest frontend-coverage frontend-lint \
-        backend-test backend-test-coverage backend-test-verbose backend-lint backend-lint-fix backend-fmt backtest
+        backend-test backend-test-coverage backend-test-verbose backend-lint backend-lint-strict backend-lint-fix backend-fmt backtest
 
 TYPESPEC_DIR := typespec
 BACKEND_DIR := backend
 FRONTEND_DIR := frontend
+GOLANGCI_LINT_VERSION := v2.11.4
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -91,15 +92,29 @@ backend-test: ## Run backend tests
 	cd $(BACKEND_DIR) && go test ./...
 
 backend-test-coverage: ## Run backend tests with coverage report
-	cd $(BACKEND_DIR) && go test ./... -coverprofile=coverage.out
+	cd $(BACKEND_DIR) && go test ./... -covermode=atomic -coverpkg=./... -coverprofile=coverage.out
 	cd $(BACKEND_DIR) && go tool cover -html=coverage.out -o coverage.html
 
 backend-test-verbose: ## Run backend tests with verbose output
 	cd $(BACKEND_DIR) && go test ./... -v
 
-backend-lint: ## Run backend linter (go vet + static analysis)
+backend-lint: ## Run quick backend lint (go vet + optional golangci-lint)
 	cd $(BACKEND_DIR) && go vet ./...
-	cd $(BACKEND_DIR) && go run honnef.co/go/tools/cmd/staticcheck@latest ./...
+	cd $(BACKEND_DIR) && if command -v golangci-lint >/dev/null 2>&1; then \
+		if golangci-lint version | grep -Eq 'built with go1\.(25|26|27|28)'; then \
+			golangci-lint run --config .golangci.yml ./...; \
+		else \
+			echo "Skipping local golangci-lint: installed binary targets older Go than this module. CI enforces $(GOLANGCI_LINT_VERSION)."; \
+		fi; \
+	else \
+		echo "Skipping local golangci-lint: install golangci-lint $(GOLANGCI_LINT_VERSION) locally or rely on CI."; \
+	fi
+
+backend-lint-strict: ## Run backend lint with required compatible golangci-lint
+	cd $(BACKEND_DIR) && go vet ./...
+	cd $(BACKEND_DIR) && command -v golangci-lint >/dev/null 2>&1 || (echo "golangci-lint $(GOLANGCI_LINT_VERSION) is required for strict lint" && exit 1)
+	cd $(BACKEND_DIR) && golangci-lint version | grep -Eq 'built with go1\.(25|26|27|28)' || (echo "Installed golangci-lint is built with older Go; install $(GOLANGCI_LINT_VERSION) or newer built with Go 1.25+" && exit 1)
+	cd $(BACKEND_DIR) && golangci-lint run --config .golangci.yml ./...
 
 backend-lint-fix: ## Auto-fix lint issues (format, organize imports)
 	cd $(BACKEND_DIR) && gofmt -w .

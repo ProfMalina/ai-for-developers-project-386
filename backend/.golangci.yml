@@ -1,76 +1,26 @@
+version: "2"
+
 run:
-  # Timeout for analysis
   timeout: 5m
-  # Include test files
   tests: true
 
 linters:
-  disable-all: true
+  default: none
   enable:
-    - govet
-    - staticcheck
     - errcheck
     - gosimple
+    - govet
     - ineffassign
-    - unused
-    - gofmt
-    - goimports
     - misspell
-    - gosec
-    - prealloc
-    - unconvert
+    - staticcheck
+    - unused
     - wastedassign
-
-linters-settings:
-  govet:
-    enable:
-      - shadow
-
-  errcheck:
-    check-type-assertions: true
-    check-blank: false
-
-  gosec:
-    excludes:
-      - G104 # Unhandled errors - we handle them in service layer
-
-  misspell:
-    locale: US
-
-  prealloc:
-    simple: true
-    range-loops: true
-    for-loops: false
-
-issues:
-  # Maximum count of issues to show (0 = show all)
-  max-issues-per-linter: 0
-  max-same-issues: 0
-
-  # Exclude generated files
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - gosec
-    - path: .*_test\.go
-      linters:
-        - unused
-        - unparam
-
-  # Exclude patterns for specific issues
-  exclude:
-    # G104: Potential file resource leak
-    - "G104:"
-    # govet: common false positive
-    - "shadow: declaration of"
-
-  uniq-by-line: true
-
-output:
-  formats:
-    - format: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
-  path-prefix: ""
-  sort-results: true
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: false
+    govet:
+      enable:
+        - shadow
+    misspell:
+      locale: US
