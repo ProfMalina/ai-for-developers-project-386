@@ -168,6 +168,8 @@ REMOTE_PATH ?= /home/admn/qwen-ai
 
 devdeploy: ## Sync files to server and rebuild docker containers
 		rsync -avz --delete \
+			--exclude='docs' \
+			--exclude='.gitignore' \
 			--exclude='.git' \
 			--exclude='.github' \
 			--exclude='.worktrees' \
