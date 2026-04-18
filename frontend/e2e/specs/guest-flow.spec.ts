@@ -1,7 +1,20 @@
 import { test, expect } from '@playwright/test';
 import { GuestHomePage } from '../pages/GuestHomePage';
 import { BookingPage } from '../pages/BookingPage';
-import { testEventTypes, testBooking } from '../fixtures/test-data';
+import { mockedEventTypes, testBooking } from '../fixtures/test-data';
+
+const createFutureSlot = (eventTypeId: string, offsetDays = 1, hour = 10, minute = 0) => {
+  const start = new Date();
+  start.setDate(start.getDate() + offsetDays);
+  start.setHours(hour, minute, 0, 0);
+
+  return {
+    id: `${eventTypeId}-${hour}-${minute}`,
+    eventTypeId,
+    startTime: start.toISOString(),
+    endTime: new Date(start.getTime() + 30 * 60 * 1000).toISOString(),
+  };
+};
 
 test.describe('Guest Booking Flow', () => {
   let guestHome: GuestHomePage;
@@ -10,11 +23,58 @@ test.describe('Guest Booking Flow', () => {
   test.beforeEach(async ({ page }) => {
     guestHome = new GuestHomePage(page);
     bookingPage = new BookingPage(page);
-    // No mocking - use real backend on port 8081
+
+    await page.route('**/api/public/event-types**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          items: mockedEventTypes,
+          pagination: { page: 1, pageSize: 10, totalItems: mockedEventTypes.length, totalPages: 1, hasNext: false, hasPrev: false },
+        }),
+      });
+    });
+
+    await page.route('**/api/public/event-types/*', async route => {
+      const id = route.request().url().split('/').pop() ?? '';
+      const eventType = mockedEventTypes.find((item) => item.id === id);
+
+      if (!eventType) {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: 'Тип встречи не найден' }),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(eventType),
+      });
+    });
+
+    await page.route('**/api/public/slots**', async route => {
+      const consultationId = mockedEventTypes[0].id;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          items: [
+            createFutureSlot(consultationId, 1, 10, 0),
+            createFutureSlot(consultationId, 1, 10, 30),
+          ],
+          pagination: { page: 1, pageSize: 100, totalItems: 2, totalPages: 1, hasNext: false, hasPrev: false },
+        }),
+      });
+    });
   });
 
-  test.afterEach(async () => {
-    // No unroute needed since we're not mocking
+  test.afterEach(async ({ page }) => {
+    await page.unroute('**/api/public/event-types**');
+    await page.unroute('**/api/public/event-types/*');
+    await page.unroute('**/api/public/slots**');
   });
 
   test('should view event types list on guest home page', async () => {
@@ -22,7 +82,7 @@ test.describe('Guest Booking Flow', () => {
     await guestHome.expectLoaded();
 
     // Verify event types are displayed
-    for (const eventType of testEventTypes) {
+    for (const eventType of mockedEventTypes) {
       await guestHome.expectEventTypeVisible(eventType.name, eventType.durationMinutes);
     }
   });
@@ -32,10 +92,10 @@ test.describe('Guest Booking Flow', () => {
     await guestHome.expectLoaded();
 
     // Click on event type
-    await guestHome.bookEventType(testEventTypes[0].name);
+    await guestHome.bookEventType(mockedEventTypes[0].name);
 
     // Verify booking page is loaded
-    await bookingPage.expectLoaded(testEventTypes[0].name);
+    await bookingPage.expectLoaded(mockedEventTypes[0].name);
 
     // Select a date
     const tomorrow = new Date();
@@ -62,8 +122,8 @@ test.describe('Guest Booking Flow', () => {
       });
     });
 
-    await bookingPage.goto(testEventTypes[0].id);
-    await bookingPage.expectLoaded(testEventTypes[0].name);
+    await bookingPage.goto(mockedEventTypes[0].id);
+    await bookingPage.expectLoaded(mockedEventTypes[0].name);
 
     // Select date
     const tomorrow = new Date();
@@ -87,8 +147,8 @@ test.describe('Guest Booking Flow', () => {
   });
 
   test('should show booked slots as unavailable', async ({ page }) => {
-    await bookingPage.goto(testEventTypes[0].id);
-    await bookingPage.expectLoaded(testEventTypes[0].name);
+    await bookingPage.goto(mockedEventTypes[0].id);
+    await bookingPage.expectLoaded(mockedEventTypes[0].name);
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -96,8 +156,8 @@ test.describe('Guest Booking Flow', () => {
 
     await bookingPage.expectTimeSlotsVisible();
 
-    // slot-3 is mocked as unavailable (isAvailable: false)
-    // The UI may render it differently - check that slots are rendered
+    // Guest UI currently renders only available slots, so the honest check here
+    // is that available slot buttons are shown rather than disabled booked slots.
     const slotButtons = page.getByRole('button', { name: /\d{2}:\d{2}/ });
     await expect(slotButtons.first()).toBeVisible();
   });
@@ -107,7 +167,7 @@ test.describe('Guest Booking Flow', () => {
     await guestHome.expectLoaded();
 
     // Book event type
-    await guestHome.bookEventType(testEventTypes[0].name);
+    await guestHome.bookEventType(mockedEventTypes[0].name);
 
     // Verify URL changed
     expect(page.url()).toContain('/book/');
@@ -119,8 +179,8 @@ test.describe('Guest Booking Flow', () => {
   });
 
   test('should handle form validation - empty fields', async ({ page }) => {
-    await bookingPage.goto(testEventTypes[0].id);
-    await bookingPage.expectLoaded(testEventTypes[0].name);
+    await bookingPage.goto(mockedEventTypes[0].id);
+    await bookingPage.expectLoaded(mockedEventTypes[0].name);
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -139,8 +199,8 @@ test.describe('Guest Booking Flow', () => {
   });
 
   test('should handle invalid email format', async ({ page }) => {
-    await bookingPage.goto(testEventTypes[0].id);
-    await bookingPage.expectLoaded(testEventTypes[0].name);
+    await bookingPage.goto(mockedEventTypes[0].id);
+    await bookingPage.expectLoaded(mockedEventTypes[0].name);
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);

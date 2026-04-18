@@ -50,48 +50,36 @@ e2e/
 
 ## Test Coverage
 
+Coverage notes in this document reflect the current suite inventory and the freshly verified Chromium run.
+
+Current audit baseline:
+
+- `npm run test:e2e -- --list` lists `135 tests in 4 files` across Chromium, Firefox, and WebKit.
+- The freshly verified Chromium run currently reports `42 passed`, `3 skipped`, `0 failed`.
+- Product-gated placeholders remain out of closure scope until the app implements them.
+
 ### Guest Flow Tests (`guest-flow.spec.ts`)
-- ✅ View event types list
-- ✅ Select event type and view calendar
-- ✅ Create a booking successfully
-- ✅ Form validation (empty fields, invalid email)
-- ✅ Navigation between pages
-- ⚠️ Booking conflicts (requires backend setup)
+- ✅ Suite includes runnable coverage for viewing event types, opening booking pages, successful booking, navigation, and validation.
+- ✅ Guest-flow Chromium coverage is currently green.
+- ⚠️ Booking conflict coverage exists in the suite, but it still depends on targeted API-mock setup rather than a real backend data fixture.
 
 ### Owner Flow Tests (`owner-flow.spec.ts`)
-- ✅ View dashboard
-- ✅ Create event type
-- ✅ Edit event type
-- ✅ Delete event type
-- ✅ Generate time slots
-- ✅ View bookings list
-- ✅ Navigate through bookings (pagination)
-- ⚠️ Cancel booking (requires test data)
-- ✅ Form validation
+- ✅ Dashboard, create, edit, delete, slot generation, bookings list, validation, pagination, and cancellation happy-path all have runnable Chromium coverage.
+- ✅ Owner-flow Chromium coverage is currently green.
 
 ### Common Features Tests (`common.spec.ts`)
-- ✅ Navigation between guest/owner pages
-- ✅ 404 page for invalid routes
-- ✅ Header navigation highlighting
-- ✅ Responsive design (mobile, tablet, desktop)
-- ⏳ Cookie consent banner (not yet implemented in app)
-- ✅ System color scheme detection
-- ⏳ Language switching (not yet implemented in app)
-- ⏳ Theme switching (not yet implemented in app)
+- ✅ The suite includes runnable checks for guest and owner navigation, invalid routes, default Russian copy, and smoke coverage that the guest/owner shells remain reachable across the audited viewports.
+- ✅ System color-scheme coverage in this suite is limited to load-smoke checks under dark/light emulation, not proof of a user-facing theme switcher.
+- ⏳ Cookie consent banner is not implemented in the app yet.
+- ⏳ RU/EN switching is not implemented in the app yet.
+- ⏳ Explicit theme switching is not implemented in the app yet. Current coverage only checks system preference handling.
 
 ### API Integration Tests (`api-integration.spec.ts`)
-- ✅ Successful booking creation (201)
-- ⏳ Booking conflict (409) - requires test data setup
-- ✅ Validation error (400)
-- ✅ Not found error (404)
-- ✅ Server error (500) handling
-- ✅ Network timeout
-- ✅ API unavailable
-- ✅ Malformed JSON response
-- ✅ Missing fields in response
-- ✅ API mocking for isolated tests
+- ✅ The suite includes API mocking coverage for booking request submission, 400/404/409 handling, guest empty-state fallbacks for failed list loads, a hanging-request shell check, blank-shell known-broken failure-mode coverage for aborted/malformed responses, missing-field tolerance, and generic owner create/cancel error surfaces.
+- ✅ The current Chromium run passes this API-integration subset.
+- ⚠️ This coverage should still be read as targeted behaviour verification, not as proof that every backend failure path in the product is comprehensively exercised.
 
-**Total: 138 tests** (across 3 browsers: Chromium, Firefox, WebKit)
+**Current listed inventory: 135 tests** (across Chromium, Firefox, and WebKit)
 
 ## Page Object Model
 
@@ -129,9 +117,11 @@ Playwright is configured in `playwright.config.ts`:
 
 ## CI/CD Integration
 
-Tests run automatically on push/PR to `main`/`master` when frontend files change.
+The repository already has a Playwright workflow. It runs on push and pull request to `main` or `master` when files under `frontend/**` change.
 
 GitHub Actions workflow: `.github/workflows/playwright.yml`
+
+This workflow is existing infrastructure, not proof that the suite is currently healthy.
 
 Artifacts uploaded:
 - `playwright-report` — HTML test report (30 days retention)
@@ -170,13 +160,13 @@ npx playwright test --update-snapshots
 
 ## Requirements Not Yet Implemented
 
-The following tests are marked as placeholders because the features are not yet implemented in the app:
+The following areas remain placeholders or blocked-by-product because the frontend does not implement them yet:
 
 - **Cookie consent banner** — SPEC.MD requirement
 - **Language switching (i18n)** — SPEC.MD requirement (Russian/English)
 - **Theme switching** — SPEC.MD requirement (light/dark/system)
 
-These tests will become functional once the corresponding features are added to the frontend.
+These checks should not be counted as implemented passing coverage until the frontend ships the corresponding behavior.
 
 ## Troubleshooting
 

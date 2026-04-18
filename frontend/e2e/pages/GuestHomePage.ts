@@ -27,11 +27,12 @@ export class GuestHomePage extends BasePage {
 
   /**
    * Get event type card by name
-   * Note: Mantine Card renders as article, but text might be in child elements
+   * Note: Mantine Card renders as a generic container, not a semantic article
    */
   getEventTypeCard(name: string) {
-    // Use getByText which searches all descendants, then find the containing article
-    return this.page.locator('article').filter({ has: this.page.getByText(name).first() });
+    return this.page
+      .getByRole('heading', { name, exact: true })
+      .locator('xpath=ancestor::div[.//a[normalize-space()="Забронировать"]][1]');
   }
 
   /**

@@ -21,18 +21,19 @@ export class BookingPage extends BasePage {
    */
   async expectLoaded(eventTypeName: string): Promise<void> {
     await this.expectHeading(`Бронирование: ${eventTypeName}`);
-    // Verify stepper is present (Mantine Stepper renders steps with specific text)
-    await expect(this.page.getByText('Шаг 1: Выберите дату').first()).toBeVisible();
-    await expect(this.page.getByText('Шаг 2: Выберите время').first()).toBeVisible();
-    await expect(this.page.getByText('Шаг 3: Ваши данные').first()).toBeVisible();
+    await expect(this.page.getByText('Шаг 1').first()).toBeVisible();
+    await expect(this.page.getByText('Выберите дату').first()).toBeVisible();
+    await expect(this.page.getByText('Шаг 2').first()).toBeVisible();
+    await expect(this.page.getByText('Выберите время').first()).toBeVisible();
+    await expect(this.page.getByText('Шаг 3').first()).toBeVisible();
+    await expect(this.page.getByText('Ваши данные').first()).toBeVisible();
   }
 
   /**
    * Step 1: Select a date
    */
   async selectDate(date: Date): Promise<void> {
-    // Click date input
-    await this.page.getByRole('textbox', { name: /дата встречи/i }).click();
+    await this.page.getByRole('button', { name: /дата встречи/i }).click();
     await this.page.waitForTimeout(500);
 
     // Click the day in calendar

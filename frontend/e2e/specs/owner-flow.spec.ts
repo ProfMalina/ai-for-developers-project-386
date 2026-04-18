@@ -2,6 +2,17 @@ import { test, expect } from '@playwright/test';
 import { OwnerDashboard } from '../pages/OwnerDashboard';
 import { testEventTypeNew, testEventTypeUpdated } from '../fixtures/test-data';
 
+const upcomingBooking = {
+  id: 'booking-1',
+  guestName: 'Иван Иванов',
+  guestEmail: 'ivan@example.com',
+  eventTypeId: 'consultation',
+  startTime: '2026-05-09T10:00:00Z',
+  endTime: '2026-05-09T10:30:00Z',
+  status: 'upcoming',
+  createdAt: '2026-04-01T09:00:00Z',
+};
+
 test.describe('Owner Management Flow', () => {
   let dashboard: OwnerDashboard;
 
@@ -46,17 +57,7 @@ test.describe('Owner Management Flow', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          items: [
-            {
-              id: 'booking-1',
-              guestName: 'Иван Иванов',
-              guestEmail: 'ivan@example.com',
-              eventTypeId: 'consultation',
-              startTime: '2026-04-09T10:00:00Z',
-              status: 'upcoming',
-              createdAt: '2026-04-01T09:00:00Z',
-            },
-          ],
+          items: [upcomingBooking],
           pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1, hasNext: false, hasPrev: false },
         }),
       });
@@ -96,7 +97,7 @@ test.describe('Owner Management Flow', () => {
   });
 
   test('should create a new event type', async ({ page }) => {
-    await page.route('**/api/event-types', async route => {
+    await page.route('**/api/event-types**', async route => {
       const method = route.request().method();
       if (method === 'POST') {
         await route.fulfill({
@@ -140,14 +141,13 @@ test.describe('Owner Management Flow', () => {
     await page.waitForTimeout(500);
 
     // Verify notification of success
-    const hasSuccess = await page.getByText(/создан|успешно|успех/i).isVisible().catch(() => false);
-    expect(hasSuccess).toBeTruthy();
+    await expect(page.getByText('Тип встречи создан')).toBeVisible({ timeout: 5000 });
   });
 
   test('should edit an existing event type', async ({ page }) => {
-    await page.route('**/api/event-types', async route => {
+    await page.route('**/api/event-types**', async route => {
       const method = route.request().method();
-      if (method === 'PATCH' || route.request().url().includes('/event-types/')) {
+      if (method === 'PATCH' || method === 'PUT' || route.request().url().includes('/event-types/')) {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -192,8 +192,7 @@ test.describe('Owner Management Flow', () => {
     await page.waitForTimeout(500);
 
     // Verify success notification
-    const hasSuccess = await page.getByText(/обновлен|успешно|успех/i).isVisible().catch(() => false);
-    expect(hasSuccess).toBeTruthy();
+    await expect(page.getByText('Тип встречи обновлен')).toBeVisible({ timeout: 5000 });
   });
 
   test('should delete an event type', async ({ page }) => {
@@ -202,7 +201,7 @@ test.describe('Owner Management Flow', () => {
       await dialog.accept();
     });
 
-    await page.route('**/api/event-types', async route => {
+    await page.route('**/api/event-types**', async route => {
       const method = route.request().method();
       if (method === 'DELETE') {
         await route.fulfill({
@@ -232,8 +231,7 @@ test.describe('Owner Management Flow', () => {
 
     await page.waitForTimeout(500);
     // Verify success notification
-    const hasSuccess = await page.getByText(/удален|успешно|успех/i).isVisible().catch(() => false);
-    expect(hasSuccess).toBeTruthy();
+    await expect(page.getByText('Тип встречи удален')).toBeVisible({ timeout: 5000 });
   });
 
   test('should generate time slots', async ({ page }) => {
@@ -271,6 +269,113 @@ test.describe('Owner Management Flow', () => {
 
     // Verify booking is visible
     await expect(page.getByText('Иван Иванов')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('should change bookings dataset when selecting another pagination page', async ({ page }) => {
+    const bookingsByPage = {
+      1: [
+        upcomingBooking,
+        {
+          id: 'booking-2',
+          guestName: 'Мария Смирнова',
+          guestEmail: 'maria@example.com',
+          eventTypeId: 'meeting',
+          startTime: '2026-05-10T09:00:00Z',
+          endTime: '2026-05-10T10:00:00Z',
+          status: 'upcoming',
+          createdAt: '2026-04-01T10:00:00Z',
+        },
+      ],
+      2: [
+        {
+          id: 'booking-3',
+          guestName: 'Пётр Петров',
+          guestEmail: 'petr@example.com',
+          eventTypeId: 'consultation',
+          startTime: '2026-05-11T11:00:00Z',
+          endTime: '2026-05-11T11:30:00Z',
+          status: 'upcoming',
+          createdAt: '2026-04-02T09:30:00Z',
+        },
+      ],
+    };
+
+    await page.route('**/api/bookings**', async route => {
+      const pageParam = Number(new URL(route.request().url()).searchParams.get('page') ?? '1');
+      const items = bookingsByPage[pageParam as 1 | 2] ?? bookingsByPage[1];
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          items,
+          pagination: {
+            page: pageParam,
+            pageSize: 10,
+            totalItems: 3,
+            totalPages: 2,
+            hasNext: pageParam < 2,
+            hasPrev: pageParam > 1,
+          },
+        }),
+      });
+    });
+
+    await dashboard.goto();
+    await dashboard.expectLoaded();
+    await dashboard.goToBookings();
+
+    await expect(page.getByText('Иван Иванов')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Пётр Петров')).not.toBeVisible();
+
+    await dashboard.goToBookingsPage(2);
+
+    await expect(page.getByText('Пётр Петров')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Иван Иванов')).not.toBeVisible();
+  });
+
+  test('should cancel booking and show success feedback', async ({ page }) => {
+    let activeBookings = [upcomingBooking];
+
+    await page.route('**/api/bookings**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          items: activeBookings,
+          pagination: {
+            page: 1,
+            pageSize: 10,
+            totalItems: activeBookings.length,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          },
+        }),
+      });
+    });
+
+    await page.route('**/api/bookings/*', async route => {
+      if (route.request().method() === 'DELETE') {
+        activeBookings = [];
+        await route.fulfill({
+          status: 204,
+          body: '',
+        });
+        return;
+      }
+
+      await route.continue();
+    });
+
+    await dashboard.goto();
+    await dashboard.expectLoaded();
+    await dashboard.goToBookings();
+
+    await dashboard.cancelBooking('Иван Иванов');
+
+    await expect(page.getByText('Бронирование отменено')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Бронирований пока нет')).toBeVisible({ timeout: 5000 });
   });
 
   test('should validate event type form fields', async ({ page }) => {

@@ -77,9 +77,9 @@ export default defineConfig({
   ],
 
   /* Web server configuration.
-   * Playwright's webServer feature has issues with Vite HMR and env vars.
-   * Instead, start the dev server manually before running tests.
-   * In CI, the workflow starts the server separately.
+   * Playwright starts `npx vite` before the suite when no compatible server is already running.
+   * `reuseExistingServer: true` lets local runs reuse an existing Vite server on the same URL.
+   * CI currently relies on this Playwright-managed server setup too.
    */
   webServer: {
     command: 'npx vite',

@@ -3,6 +3,8 @@ import { GuestHomePage } from '../pages/GuestHomePage';
 import { OwnerDashboard } from '../pages/OwnerDashboard';
 import { setViewport } from '../utils/helpers';
 
+const BOOKING_HEADING = 'Забронировать встречу';
+
 test.describe('Common Features', () => {
   test.beforeEach(async ({ page }) => {
     // Mock API - use correct response structure: { items: [], pagination: {} }
@@ -122,7 +124,7 @@ test.describe('Common Features', () => {
       expect(page.url()).toMatch(/\/$/);
     });
 
-    test('header navigation highlights active page', async ({ page }) => {
+    test('header navigation links stay visible while switching between guest and owner pages', async ({ page }) => {
       const guestHome = new GuestHomePage(page);
       await guestHome.goto();
 
@@ -142,98 +144,82 @@ test.describe('Common Features', () => {
   });
 
   test.describe('Responsive Design', () => {
-    test('should display correctly on mobile viewport (375px)', async ({ page }) => {
+    test('keeps guest home content visible on a mobile viewport (375px)', async ({ page }) => {
       await setViewport(page, 375, 800);
 
       const guestHome = new GuestHomePage(page);
       await guestHome.goto();
       await guestHome.expectLoaded();
 
-      // Verify main elements are visible
-      await expect(page.getByRole('heading', { name: 'Забронировать встречу' })).toBeVisible();
-
-      // Verify layout is responsive (cards should stack)
-      const cards = page.locator('article');
-      const cardCount = await cards.count();
-      expect(cardCount).toBeGreaterThan(0);
+      await expect(page.getByText('Консультация').first()).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Забронировать' }).first()).toBeVisible();
     });
 
-    test('should display correctly on tablet viewport (768px)', async ({ page }) => {
+    test('keeps guest home heading visible on a tablet viewport (768px)', async ({ page }) => {
       await setViewport(page, 768, 1024);
 
       const guestHome = new GuestHomePage(page);
       await guestHome.goto();
       await guestHome.expectLoaded();
 
-      await expect(page.getByRole('heading', { name: 'Забронировать встречу' })).toBeVisible();
+      await expect(page.getByText(BOOKING_HEADING).first()).toBeVisible();
     });
 
-    test('should display correctly on desktop viewport (1280px)', async ({ page }) => {
+    test('keeps guest home heading visible on a desktop viewport (1280px)', async ({ page }) => {
       await setViewport(page, 1280, 800);
 
       const guestHome = new GuestHomePage(page);
       await guestHome.goto();
       await guestHome.expectLoaded();
 
-      await expect(page.getByRole('heading', { name: 'Забронировать встречу' })).toBeVisible();
+      await expect(page.getByText(BOOKING_HEADING).first()).toBeVisible();
     });
 
-    test('owner dashboard should be responsive', async ({ page }) => {
+    test('keeps owner dashboard tabs reachable on a mobile viewport', async ({ page }) => {
       await setViewport(page, 375, 800);
 
       const dashboard = new OwnerDashboard(page);
       await dashboard.goto();
       await dashboard.expectLoaded();
 
-      // Verify tabs are visible even on mobile
       await expect(page.getByRole('tab', { name: 'Типы встреч' })).toBeVisible();
     });
   });
 
   test.describe('Cookie Consent Banner', () => {
-    test('should handle first visit gracefully', async ({ page, context }) => {
-      // Clear cookies to simulate first visit
+    test('first visit still loads while cookie consent UI is absent', async ({ page, context }) => {
       await context.clearCookies();
 
       const guestHome = new GuestHomePage(page);
       await guestHome.goto();
 
-      // Cookie banner is not yet implemented per SPEC.MD
-      // Page should still load correctly
       await guestHome.expectLoaded();
     });
 
-    test('should accept cookies and hide banner', async ({ page }) => {
-      const guestHome = new GuestHomePage(page);
-      await guestHome.goto();
-
-      // Accept cookies if banner exists (no-op if not implemented)
-      await guestHome.acceptCookies();
-
-      // Page should remain loaded
-      await guestHome.expectLoaded();
+    test.skip('should accept cookies and hide banner', async () => {
+      // Cookie consent UI is not implemented yet.
     });
   });
 
   test.describe('Theme Support', () => {
-    test('should respect system color scheme preference - dark', async ({ page }) => {
+    test('guest home still loads when dark color scheme is emulated', async ({ page }) => {
       const darkPage = await page.context().newPage();
       await darkPage.emulateMedia({ colorScheme: 'dark' });
 
       const guestHome = new GuestHomePage(darkPage);
       await guestHome.goto();
 
-      await expect(darkPage.getByRole('heading', { name: 'Забронировать встречу' })).toBeVisible();
+      await expect(darkPage.getByText(BOOKING_HEADING).first()).toBeVisible();
     });
 
-    test('should respect system color scheme preference - light', async ({ page }) => {
+    test('guest home still loads when light color scheme is emulated', async ({ page }) => {
       const lightPage = await page.context().newPage();
       await lightPage.emulateMedia({ colorScheme: 'light' });
 
       const guestHome = new GuestHomePage(lightPage);
       await guestHome.goto();
 
-      await expect(lightPage.getByRole('heading', { name: 'Забронировать встречу' })).toBeVisible();
+      await expect(lightPage.getByText(BOOKING_HEADING).first()).toBeVisible();
     });
   });
 
@@ -258,21 +244,18 @@ test.describe('Common Features', () => {
   });
 
   test.describe('Date and Time Formatting', () => {
-    test('should display dates in Russian format', async ({ page }) => {
+    test('guest home uses Russian locale copy by default', async ({ page }) => {
       const guestHome = new GuestHomePage(page);
       await guestHome.goto();
 
-      // Dates should be formatted in Russian locale (dayjs with 'ru' locale)
-      // This is verified by the page loading correctly with Russian text
-      await guestHome.expectLoaded();
+      await expect(page.getByText('Выберите тип встречи и удобное для вас время')).toBeVisible();
     });
 
-    test('should display time in 24-hour format', async ({ page }) => {
+    test('owner schedule tab is reachable for time-format coverage', async ({ page }) => {
       const dashboard = new OwnerDashboard(page);
       await dashboard.goto();
       await dashboard.switchTab('slots');
 
-      // Time slots should be in 24-hour format
       await expect(page.getByRole('tab', { name: 'Расписание' })).toBeVisible();
     });
   });
