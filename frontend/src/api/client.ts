@@ -134,6 +134,7 @@ export const ownerApi = {
   },
 
   async generateSlots(
+    eventTypeId: string,
     data: {
       workingHoursStart: string;
       workingHoursEnd: string;
@@ -145,7 +146,7 @@ export const ownerApi = {
     }
   ): Promise<{ slotsCreated: number; createdSlotIds: string[] }> {
     const response = await apiClient.post<{ slotsCreated: number; createdSlotIds: string[] }>(
-      '/api/slots/generate',
+      `/api/event-types/${eventTypeId}/slots/generate`,
       data
     );
     return response.data;

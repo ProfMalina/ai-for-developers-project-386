@@ -5,6 +5,7 @@ import {
   Group,
   Text,
   Modal,
+  Select,
   TextInput,
   NumberInput,
   Stack,
@@ -16,6 +17,7 @@ import dayjs from 'dayjs';
 import { notifications } from '@mantine/notifications';
 import { IconClock } from '@tabler/icons-react';
 import { ownerApi } from '../../api/client';
+import type { EventType } from '../../types/api';
 
 const DAYS = [
   { value: '1', label: 'Пн' },
@@ -30,6 +32,8 @@ const DAYS = [
 export function SlotGeneration() {
   const [loading, setLoading] = useState(false);
   const [modalOpened, setModalOpened] = useState(false);
+  const [eventTypes, setEventTypes] = useState<EventType[]>([]);
+  const [selectedEventTypeId, setSelectedEventTypeId] = useState<string | null>(null);
 
   const [workingHoursStart, setWorkingHoursStart] = useState('09:00');
   const [workingHoursEnd, setWorkingHoursEnd] = useState('18:00');
@@ -39,10 +43,32 @@ export function SlotGeneration() {
   const [dateTo, setDateTo] = useState<string | null>(dayjs().add(30, 'day').format('YYYY-MM-DD'));
 
   useEffect(() => {
-    // Default values are set in useState
+    const fetchEventTypes = async () => {
+      try {
+        const response = await ownerApi.getEventTypes({ page: 1, pageSize: 100 });
+        setEventTypes(response.items);
+        setSelectedEventTypeId((current) => current ?? response.items[0]?.id ?? null);
+      } catch {
+        notifications.show({
+          title: 'Ошибка',
+          message: 'Не удалось загрузить типы встреч',
+          color: 'red',
+        });
+      }
+    };
+
+    void fetchEventTypes();
   }, []);
 
   const handleSubmit = async () => {
+    if (!selectedEventTypeId) {
+      notifications.show({
+        title: 'Ошибка',
+        message: 'Выберите тип встречи',
+        color: 'red',
+      });
+      return;
+    }
 
     if (daysOfWeek.length === 0) {
       notifications.show({
@@ -64,7 +90,7 @@ export function SlotGeneration() {
 
     setLoading(true);
     try {
-      const result = await ownerApi.generateSlots({
+      const result = await ownerApi.generateSlots(selectedEventTypeId, {
         workingHoursStart,
         workingHoursEnd,
         intervalMinutes,
@@ -122,6 +148,16 @@ export function SlotGeneration() {
       >
         <LoadingOverlay visible={loading} />
         <Stack>
+          <Select
+            label="Тип встречи"
+            placeholder="Выберите тип встречи"
+            data={eventTypes.map((eventType) => ({ value: eventType.id, label: eventType.name }))}
+            value={selectedEventTypeId}
+            onChange={setSelectedEventTypeId}
+            searchable={false}
+            required
+          />
+
           <Group grow>
             <TextInput
               label="Начало рабочего дня"

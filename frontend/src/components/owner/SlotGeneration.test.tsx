@@ -14,6 +14,24 @@ vi.mock('@mantine/core', async () => {
     Modal: ({ opened, title, children }: { opened: boolean; title: string; children: ReactNode }) => (
       opened ? <div role="dialog" aria-label={title}>{children}</div> : null
     ),
+    Select: ({
+      label,
+      value,
+      onChange,
+      data,
+    }: {
+      label: string;
+      value: string | null;
+      onChange: (value: string | null) => void;
+      data: Array<{ value: string; label: string }>;
+    }) => (
+      <select aria-label={label} value={value ?? ''} onChange={(event) => onChange(event.currentTarget.value || null)}>
+        <option value="">--</option>
+        {data.map((option) => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+    ),
   };
 });
 
@@ -50,6 +68,7 @@ describe('SlotGeneration', () => {
     await user.click(screen.getByRole('button', { name: /Создать слоты/i }));
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Тип встречи/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Начало рабочего дня/i)).toHaveValue('09:00');
     expect((screen.getByLabelText(/Дата начала/i) as HTMLInputElement).value).not.toBe('');
   });
@@ -83,17 +102,34 @@ describe('SlotGeneration', () => {
 
   it('shows success message after generating slots', async () => {
     const user = userEvent.setup();
+    let capturedEventTypeId = '';
+
+    server.use(
+      http.post('*/api/event-types/:eventTypeId/slots/generate', ({ params }) => {
+        capturedEventTypeId = String(params.eventTypeId);
+        return HttpResponse.json({
+          slotsCreated: 10,
+          slotsSkipped: 0,
+          dateFrom: '2026-04-08',
+          dateTo: '2026-05-08',
+          createdSlotIds: ['slot-1', 'slot-2', 'slot-3'],
+        });
+      })
+    );
+
     render(<SlotGeneration />);
 
     await user.click(screen.getByRole('button', { name: /Создать слоты/i }));
+    await user.selectOptions(screen.getByLabelText(/Тип встречи/i), 'event-type-1');
     await user.click(screen.getByRole('button', { name: /Сгенерировать слоты/i }));
 
     expect(await screen.findByText(/Создано 10 слотов/i)).toBeInTheDocument();
+    expect(capturedEventTypeId).toBe('event-type-1');
   });
 
   it('shows API error when generation fails', async () => {
     server.use(
-      http.post('*/api/slots/generate', () =>
+      http.post('*/api/event-types/:eventTypeId/slots/generate', () =>
         HttpResponse.json({ message: 'Генерация недоступна' }, { status: 500 })
       )
     );
@@ -102,6 +138,7 @@ describe('SlotGeneration', () => {
     render(<SlotGeneration />);
 
     await user.click(screen.getByRole('button', { name: /Создать слоты/i }));
+    await user.selectOptions(screen.getByLabelText(/Тип встречи/i), 'event-type-1');
     await user.click(screen.getByRole('button', { name: /Сгенерировать слоты/i }));
 
     expect(await screen.findByText(/Генерация недоступна/i)).toBeInTheDocument();

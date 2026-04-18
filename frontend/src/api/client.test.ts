@@ -133,8 +133,23 @@ describe('Owner API', () => {
   });
 
   describe('generateSlots', () => {
-    it('should generate time slots', async () => {
-      const result = await ownerApi.generateSlots({
+    it('should generate time slots for a specific event type', async () => {
+      let capturedEventTypeId = '';
+
+      server.use(
+        http.post('*/api/event-types/:eventTypeId/slots/generate', async ({ params }) => {
+          capturedEventTypeId = String(params.eventTypeId);
+          return HttpResponse.json({
+            slotsCreated: 10,
+            slotsSkipped: 0,
+            dateFrom: '2026-04-08',
+            dateTo: '2026-05-08',
+            createdSlotIds: ['slot-1', 'slot-2', 'slot-3'],
+          });
+        })
+      );
+
+      const result = await ownerApi.generateSlots('event-type-1', {
         workingHoursStart: '09:00',
         workingHoursEnd: '18:00',
         intervalMinutes: 30,
@@ -145,6 +160,7 @@ describe('Owner API', () => {
       });
 
       expect(result.slotsCreated).toBe(10);
+      expect(capturedEventTypeId).toBe('event-type-1');
     });
   });
 

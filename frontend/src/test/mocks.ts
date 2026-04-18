@@ -182,7 +182,7 @@ export const handlers = [
     return HttpResponse.json(createMockPaginatedResponse([mockBooking]));
   }),
 
-  http.post('*/api/slots/generate', async () => {
+  http.post('*/api/event-types/:eventTypeId/slots/generate', async () => {
     const result: SlotGenerationResult = {
       slotsCreated: 10,
       slotsSkipped: 0,
