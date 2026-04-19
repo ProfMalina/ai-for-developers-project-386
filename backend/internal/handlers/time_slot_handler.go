@@ -20,13 +20,19 @@ type TimeSlotHandler struct {
 
 // NewTimeSlotHandler creates a new time slot handler
 func NewTimeSlotHandler() *TimeSlotHandler {
-	return &TimeSlotHandler{
-		service: services.NewTimeSlotService(
+	return NewTimeSlotHandlerWithService(
+		services.NewTimeSlotService(
 			repositories.NewTimeSlotRepository(),
 			repositories.NewSlotGenerationConfigRepository(),
 			repositories.NewOwnerRepository(),
 			repositories.NewEventTypeRepository(),
 		),
+	)
+}
+
+func NewTimeSlotHandlerWithService(service *services.TimeSlotService) *TimeSlotHandler {
+	return &TimeSlotHandler{
+		service: service,
 	}
 }
 

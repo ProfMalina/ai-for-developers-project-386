@@ -18,12 +18,18 @@ type PublicBookingHandler struct {
 
 // NewPublicBookingHandler creates a new public booking handler
 func NewPublicBookingHandler() *PublicBookingHandler {
-	return &PublicBookingHandler{
-		service: services.NewBookingService(
+	return NewPublicBookingHandlerWithService(
+		services.NewBookingService(
 			repositories.NewBookingRepository(),
 			repositories.NewTimeSlotRepository(),
 			repositories.NewEventTypeRepository(),
 		),
+	)
+}
+
+func NewPublicBookingHandlerWithService(service *services.BookingService) *PublicBookingHandler {
+	return &PublicBookingHandler{
+		service: service,
 	}
 }
 
