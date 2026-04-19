@@ -32,7 +32,7 @@ func TestBuildDeleteAvailableInRangeQuery_PreservesBookedSlotsAndAllowsLegacyNul
 		t.Fatalf("expected query to preserve slots referenced by active bookings, got %q", query)
 	}
 
-	if !strings.Contains(query, "b.status != 'cancelled'") {
+	if !strings.Contains(query, "b.status != 'cancelled'") { //nolint:misspell // persisted booking status value
 		t.Fatalf("expected query to preserve non-cancelled bookings, got %q", query)
 	}
 

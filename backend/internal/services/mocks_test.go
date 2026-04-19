@@ -89,7 +89,11 @@ func (m *MockTimeSlotRepository) List(ctx context.Context, ownerID, eventTypeID 
 	if args.Get(0) == nil {
 		return nil, args.Int(1), args.Error(2)
 	}
-	return args.Get(0).([]models.TimeSlot), args.Int(1), args.Error(2)
+	timeSlots, ok := args.Get(0).([]models.TimeSlot)
+	if !ok {
+		return nil, args.Int(1), args.Error(2)
+	}
+	return timeSlots, args.Int(1), args.Error(2)
 }
 
 func (m *MockTimeSlotRepository) GetAvailableSlots(ctx context.Context, ownerID string, page, pageSize int, startTime, endTime *time.Time) ([]models.TimeSlot, int, error) {
@@ -97,7 +101,11 @@ func (m *MockTimeSlotRepository) GetAvailableSlots(ctx context.Context, ownerID 
 	if args.Get(0) == nil {
 		return nil, args.Int(1), args.Error(2)
 	}
-	return args.Get(0).([]models.TimeSlot), args.Int(1), args.Error(2)
+	timeSlots, ok := args.Get(0).([]models.TimeSlot)
+	if !ok {
+		return nil, args.Int(1), args.Error(2)
+	}
+	return timeSlots, args.Int(1), args.Error(2)
 }
 
 func (m *MockTimeSlotRepository) DeleteAvailableInRange(ctx context.Context, ownerID, eventTypeID string, startTime, endTime time.Time) error {
@@ -125,7 +133,11 @@ func (m *MockEventTypeRepository) GetByID(ctx context.Context, id string) (*mode
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.EventType), args.Error(1)
+	eventType, ok := args.Get(0).(*models.EventType)
+	if !ok {
+		return nil, args.Error(1)
+	}
+	return eventType, args.Error(1)
 }
 
 func (m *MockEventTypeRepository) List(ctx context.Context, ownerID string, page, pageSize int, sortBy, sortOrder string) ([]models.EventType, int, error) {
