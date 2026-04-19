@@ -65,7 +65,9 @@ func (r *BookingRepository) CreateWithReservedSlot(ctx context.Context, booking 
 	if err != nil {
 		return fmt.Errorf("failed to begin booking transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 
 	reserveQuery := `UPDATE time_slots SET is_available = false WHERE id = $1 AND is_available = true`
 	result, err := tx.Exec(ctx, reserveQuery, *booking.SlotID)

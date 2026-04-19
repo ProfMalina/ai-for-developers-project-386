@@ -170,7 +170,6 @@ func (r *EventTypeRepository) Patch(ctx context.Context, id string, req models.U
 	if req.IsActive != nil {
 		setClauses = append(setClauses, fmt.Sprintf("is_active = $%d", argIdx))
 		args = append(args, *req.IsActive)
-		argIdx++
 	}
 
 	if len(setClauses) == 0 {

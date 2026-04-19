@@ -125,7 +125,7 @@ func (r *TimeSlotRepository) DeleteAvailableInRange(_ context.Context, ownerID, 
 		if slot.EventTypeID != eventTypeID && slot.EventTypeID != "" {
 			continue
 		}
-		if !(slot.StartTime.Before(endTime) && slot.EndTime.After(startTime)) {
+		if !slot.StartTime.Before(endTime) || !slot.EndTime.After(startTime) {
 			continue
 		}
 		preserve := false
