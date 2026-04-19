@@ -145,7 +145,11 @@ func (m *MockEventTypeRepository) List(ctx context.Context, ownerID string, page
 	if args.Get(0) == nil {
 		return nil, args.Int(1), args.Error(2)
 	}
-	return args.Get(0).([]models.EventType), args.Int(1), args.Error(2)
+	eventTypes, ok := args.Get(0).([]models.EventType)
+	if !ok {
+		return nil, args.Int(1), args.Error(2)
+	}
+	return eventTypes, args.Int(1), args.Error(2)
 }
 
 func (m *MockEventTypeRepository) Patch(ctx context.Context, id string, req models.UpdateEventTypeRequest) (*models.EventType, error) {
@@ -153,7 +157,11 @@ func (m *MockEventTypeRepository) Patch(ctx context.Context, id string, req mode
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.EventType), args.Error(1)
+	eventType, ok := args.Get(0).(*models.EventType)
+	if !ok {
+		return nil, args.Error(1)
+	}
+	return eventType, args.Error(1)
 }
 
 func (m *MockEventTypeRepository) Delete(ctx context.Context, id string) error {
