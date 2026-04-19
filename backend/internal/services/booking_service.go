@@ -46,9 +46,9 @@ func (s *BookingService) Create(ctx context.Context, req models.CreateBookingReq
 
 	// If slot is provided, use its times
 	if req.SlotID != nil {
-		slot, err := s.slotRepo.GetByID(ctx, *req.SlotID)
-		if err != nil {
-			return nil, fmt.Errorf("time slot not found: %w", err)
+		slot, slotErr := s.slotRepo.GetByID(ctx, *req.SlotID)
+		if slotErr != nil {
+			return nil, fmt.Errorf("time slot not found: %w", slotErr)
 		}
 
 		if !slot.IsAvailable {
@@ -119,18 +119,12 @@ func (s *BookingService) Cancel(ctx context.Context, id string) error {
 		return err
 	}
 
-	if booking.Status == "cancelled" {
-		return fmt.Errorf("booking is already cancelled")
+	if booking.Status == "cancelled" { //nolint:misspell // persisted booking status value
+		return fmt.Errorf("booking is already canceled")
 	}
 
 	if err := s.repo.Cancel(ctx, id); err != nil {
 		return err
-	}
-
-	// Free up the slot if it was assigned
-	if booking.SlotID != nil {
-		// In a real implementation, you'd mark the slot as available again
-		// For now, we'll leave it as is
 	}
 
 	return nil

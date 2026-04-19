@@ -18,8 +18,12 @@ type EventTypeHandler struct {
 
 // NewEventTypeHandler creates a new event type handler
 func NewEventTypeHandler() *EventTypeHandler {
+	return NewEventTypeHandlerWithService(services.NewEventTypeService(repositories.NewEventTypeRepository()))
+}
+
+func NewEventTypeHandlerWithService(service *services.EventTypeService) *EventTypeHandler {
 	return &EventTypeHandler{
-		service: services.NewEventTypeService(repositories.NewEventTypeRepository()),
+		service: service,
 	}
 }
 

@@ -21,9 +21,12 @@ func NewBookingHandler() *BookingHandler {
 	bookingRepo := repositories.NewBookingRepository()
 	slotRepo := repositories.NewTimeSlotRepository()
 	etRepo := repositories.NewEventTypeRepository()
+	return NewBookingHandlerWithService(services.NewBookingService(bookingRepo, slotRepo, etRepo))
+}
 
+func NewBookingHandlerWithService(service *services.BookingService) *BookingHandler {
 	return &BookingHandler{
-		service: services.NewBookingService(bookingRepo, slotRepo, etRepo),
+		service: service,
 	}
 }
 
@@ -82,7 +85,7 @@ func (h *BookingHandler) Cancel(c *gin.Context) {
 
 	err := h.service.Cancel(c.Request.Context(), id)
 	if err != nil {
-		if strings.Contains(err.Error(), "already cancelled") {
+		if strings.Contains(err.Error(), "already canceled") {
 			BadRequest(c, err.Error())
 			return
 		}

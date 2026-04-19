@@ -32,8 +32,8 @@ func TestBuildDeleteAvailableInRangeQuery_PreservesBookedSlotsAndAllowsLegacyNul
 		t.Fatalf("expected query to preserve slots referenced by active bookings, got %q", query)
 	}
 
-	if !strings.Contains(query, "b.status != 'cancelled'") {
-		t.Fatalf("expected query to preserve non-cancelled bookings, got %q", query)
+	if !strings.Contains(query, "b.status != 'cancelled'") { //nolint:misspell // persisted booking status value
+		t.Fatalf("expected query to preserve non-canceled bookings, got %q", query)
 	}
 
 	if !strings.Contains(query, "(event_type_id = $2 OR event_type_id IS NULL)") {
@@ -64,7 +64,7 @@ func TestBuildGetAvailableSlotsQuery_ExcludesIntervalsWithActiveBookings(t *test
 	}
 
 	if !strings.Contains(query, "b.status != 'cancelled'") {
-		t.Fatalf("expected available-slots query to ignore cancelled bookings only, got %q", query)
+		t.Fatalf("expected available-slots query to ignore canceled bookings only, got %q", query)
 	}
 
 	if !strings.Contains(query, "b.start_time < time_slots.end_time") || !strings.Contains(query, "b.end_time > time_slots.start_time") {

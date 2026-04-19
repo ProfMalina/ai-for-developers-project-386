@@ -16,8 +16,12 @@ type OwnerHandler struct {
 
 // NewOwnerHandler creates a new owner handler
 func NewOwnerHandler() *OwnerHandler {
+	return NewOwnerHandlerWithService(services.NewOwnerService(repositories.NewOwnerRepository()))
+}
+
+func NewOwnerHandlerWithService(service *services.OwnerService) *OwnerHandler {
 	return &OwnerHandler{
-		service: services.NewOwnerService(repositories.NewOwnerRepository()),
+		service: service,
 	}
 }
 

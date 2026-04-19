@@ -232,7 +232,7 @@ func TestBookingHandler_Cancel_MapsAlreadyCancelledToBadRequest(t *testing.T) {
 	handler := &BookingHandler{service: services.NewBookingService(
 		bookingRepoStub{
 			getByIDFn: func(_ context.Context, id string) (*models.Booking, error) {
-				return &models.Booking{ID: id, Status: "cancelled"}, nil
+				return &models.Booking{ID: id, Status: "cancelled"}, nil //nolint:misspell // persisted booking status value
 			},
 		},
 		timeSlotRepoStub{},
@@ -247,7 +247,7 @@ func TestBookingHandler_Cancel_MapsAlreadyCancelledToBadRequest(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "already cancelled")
+	assert.Contains(t, w.Body.String(), "already canceled")
 }
 
 func TestBookingHandler_List_ReturnsPaginatedBookings(t *testing.T) {

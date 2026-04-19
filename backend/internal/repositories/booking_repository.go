@@ -65,7 +65,9 @@ func (r *BookingRepository) CreateWithReservedSlot(ctx context.Context, booking 
 	if err != nil {
 		return fmt.Errorf("failed to begin booking transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 
 	reserveQuery := `UPDATE time_slots SET is_available = false WHERE id = $1 AND is_available = true`
 	result, err := tx.Exec(ctx, reserveQuery, *booking.SlotID)
@@ -297,7 +299,7 @@ func (r *BookingRepository) Patch(ctx context.Context, id string, req models.Upd
 	args = append(args, id)
 
 	query := fmt.Sprintf("UPDATE bookings SET %s WHERE id = $%d RETURNING id, event_type_id, slot_id, guest_name, guest_email, timezone, start_time, end_time, status, created_at",
-		strings.Join(setClauses, ", "), argIdx+1)
+		strings.Join(setClauses, ", "), argIdx)
 
 	err = db.Pool.QueryRow(ctx, query, args...).Scan(
 		&booking.ID, &booking.EventTypeID, &booking.SlotID, &booking.GuestName,

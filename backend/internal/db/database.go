@@ -50,6 +50,7 @@ func InitDB(ctx context.Context, dsn string) error {
 func CloseDB() {
 	if Pool != nil {
 		Pool.Close()
+		Pool = nil
 		log.Println("Database connection pool closed")
 	}
 }

@@ -19,14 +19,21 @@ type PublicEventTypeHandler struct {
 
 // NewPublicEventTypeHandler creates a new public event type handler
 func NewPublicEventTypeHandler() *PublicEventTypeHandler {
-	return &PublicEventTypeHandler{
-		etService: services.NewEventTypeService(repositories.NewEventTypeRepository()),
-		slotService: services.NewTimeSlotService(
+	return NewPublicEventTypeHandlerWithServices(
+		services.NewEventTypeService(repositories.NewEventTypeRepository()),
+		services.NewTimeSlotService(
 			repositories.NewTimeSlotRepository(),
 			repositories.NewSlotGenerationConfigRepository(),
 			repositories.NewOwnerRepository(),
 			repositories.NewEventTypeRepository(),
 		),
+	)
+}
+
+func NewPublicEventTypeHandlerWithServices(etService *services.EventTypeService, slotService *services.TimeSlotService) *PublicEventTypeHandler {
+	return &PublicEventTypeHandler{
+		etService:   etService,
+		slotService: slotService,
 	}
 }
 

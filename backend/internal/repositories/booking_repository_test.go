@@ -13,12 +13,12 @@ func TestBuildBookingListQueries_ExcludeCancelledByDefault(t *testing.T) {
 		t.Fatalf("expected pagination args only, got %d", len(args))
 	}
 
-	if !strings.Contains(query, "status != 'cancelled'") {
-		t.Fatalf("expected bookings list query to exclude cancelled bookings by default, got %q", query)
+	if !strings.Contains(query, "status != 'cancelled'") { //nolint:misspell // persisted booking status value
+		t.Fatalf("expected bookings list query to exclude canceled bookings by default, got %q", query)
 	}
 
-	if !strings.Contains(countQuery, "status != 'cancelled'") {
-		t.Fatalf("expected bookings count query to exclude cancelled bookings by default, got %q", countQuery)
+	if !strings.Contains(countQuery, "status != 'cancelled'") { //nolint:misspell // persisted booking status value
+		t.Fatalf("expected bookings count query to exclude canceled bookings by default, got %q", countQuery)
 	}
 
 	if !strings.Contains(query, "ORDER BY start_time asc") {
