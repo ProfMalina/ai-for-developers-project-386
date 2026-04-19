@@ -349,7 +349,7 @@ func TestBookingService_Cancel_AlreadyCancelled(t *testing.T) {
 	err := service.Cancel(context.Background(), bookingID)
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "booking is already cancelled")
+	assert.Contains(t, err.Error(), "booking is already canceled")
 }
 
 func TestBookingService_Delete_Success(t *testing.T) {
