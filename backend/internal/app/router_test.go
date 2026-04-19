@@ -21,6 +21,11 @@ func TestMemoryModeRouter_HealthAndCoreFlow(t *testing.T) {
 	require.NoError(t, err)
 	r := NewRouter(container, "test")
 
+	rootReq := httptest.NewRequest(http.MethodGet, "/", nil)
+	rootRes := httptest.NewRecorder()
+	r.ServeHTTP(rootRes, rootReq)
+	require.Equal(t, http.StatusOK, rootRes.Code)
+
 	healthReq := httptest.NewRequest(http.MethodGet, "/health", nil)
 	healthRes := httptest.NewRecorder()
 	r.ServeHTTP(healthRes, healthReq)

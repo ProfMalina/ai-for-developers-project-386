@@ -17,6 +17,10 @@ func NewRouter(container *Container, env string) *gin.Engine {
 	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.ErrorHandler())
 
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":       "ok",
