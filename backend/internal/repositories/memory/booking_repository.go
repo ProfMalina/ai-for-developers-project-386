@@ -40,7 +40,7 @@ func (r *BookingRepository) CreateWithReservedSlot(_ context.Context, booking *m
 			return fmt.Errorf("time slot is already booked")
 		}
 		for _, existing := range r.store.bookings {
-			if existing.Status == "cancelled" {
+			if existing.Status == "cancelled" { //nolint:misspell // persisted booking status value
 				continue
 			}
 			if existing.StartTime.Before(booking.EndTime) && existing.EndTime.After(booking.StartTime) {
@@ -77,7 +77,7 @@ func (r *BookingRepository) List(_ context.Context, page, pageSize int, sortBy, 
 	defer r.store.mu.RUnlock()
 	items := make([]models.Booking, 0)
 	for _, booking := range r.store.bookings {
-		if booking.Status == "cancelled" {
+		if booking.Status == "cancelled" { //nolint:misspell // persisted booking status value
 			continue
 		}
 		if dateFrom != nil && booking.StartTime.Before(*dateFrom) {

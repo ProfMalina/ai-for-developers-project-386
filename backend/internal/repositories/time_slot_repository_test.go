@@ -64,7 +64,7 @@ func TestBuildGetAvailableSlotsQuery_ExcludesIntervalsWithActiveBookings(t *test
 	}
 
 	if !strings.Contains(query, "b.status != 'cancelled'") {
-		t.Fatalf("expected available-slots query to ignore cancelled bookings only, got %q", query)
+		t.Fatalf("expected available-slots query to ignore canceled bookings only, got %q", query)
 	}
 
 	if !strings.Contains(query, "b.start_time < time_slots.end_time") || !strings.Contains(query, "b.end_time > time_slots.start_time") {
