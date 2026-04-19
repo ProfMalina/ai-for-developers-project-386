@@ -341,7 +341,7 @@ func TestBookingService_Cancel_AlreadyCancelled(t *testing.T) {
 	bookingID := "test-booking-id"
 	booking := &models.Booking{
 		ID:     bookingID,
-		Status: "cancelled",
+		Status: "cancelled", //nolint:misspell // persisted booking status value
 	}
 
 	mockBookingRepo.On("GetByID", mock.Anything, bookingID).Return(booking, nil)

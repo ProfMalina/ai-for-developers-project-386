@@ -121,7 +121,7 @@ func (r *BookingRepository) CheckOverlap(_ context.Context, startTime, endTime t
 	r.store.mu.RLock()
 	defer r.store.mu.RUnlock()
 	for _, booking := range r.store.bookings {
-		if booking.Status == "cancelled" {
+		if booking.Status == "cancelled" { //nolint:misspell // persisted booking status value
 			continue
 		}
 		if booking.StartTime.Before(endTime) && booking.EndTime.After(startTime) {
@@ -138,7 +138,7 @@ func (r *BookingRepository) Cancel(_ context.Context, id string) error {
 	if !ok {
 		return fmt.Errorf("booking not found")
 	}
-	b.Status = "cancelled"
+	b.Status = "cancelled" //nolint:misspell // persisted booking status value
 	r.store.bookings[id] = b
 	return nil
 }

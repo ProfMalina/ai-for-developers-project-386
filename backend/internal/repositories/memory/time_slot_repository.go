@@ -89,7 +89,7 @@ func (r *TimeSlotRepository) GetAvailableSlots(_ context.Context, ownerID string
 		}
 		overlaps := false
 		for _, booking := range r.store.bookings {
-			if booking.Status == "cancelled" {
+			if booking.Status == "cancelled" { //nolint:misspell // persisted booking status value
 				continue
 			}
 			if booking.StartTime.Before(slot.EndTime) && booking.EndTime.After(slot.StartTime) {
@@ -130,7 +130,7 @@ func (r *TimeSlotRepository) DeleteAvailableInRange(_ context.Context, ownerID, 
 		}
 		preserve := false
 		for _, booking := range r.store.bookings {
-			if booking.SlotID != nil && *booking.SlotID == id && booking.Status != "cancelled" {
+			if booking.SlotID != nil && *booking.SlotID == id && booking.Status != "cancelled" { //nolint:misspell // persisted booking status value
 				preserve = true
 				break
 			}
