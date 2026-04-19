@@ -28,7 +28,11 @@ func (m *MockBookingRepository) GetByID(ctx context.Context, id string) (*models
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.Booking), args.Error(1)
+	booking, ok := args.Get(0).(*models.Booking)
+	if !ok {
+		return nil, args.Error(1)
+	}
+	return booking, args.Error(1)
 }
 
 func (m *MockBookingRepository) List(ctx context.Context, page, pageSize int, sortBy, sortOrder string, dateFrom, dateTo *time.Time) ([]models.Booking, int, error) {
@@ -36,7 +40,11 @@ func (m *MockBookingRepository) List(ctx context.Context, page, pageSize int, so
 	if args.Get(0) == nil {
 		return nil, args.Int(1), args.Error(2)
 	}
-	return args.Get(0).([]models.Booking), args.Int(1), args.Error(2)
+	bookings, ok := args.Get(0).([]models.Booking)
+	if !ok {
+		return nil, args.Int(1), args.Error(2)
+	}
+	return bookings, args.Int(1), args.Error(2)
 }
 
 func (m *MockBookingRepository) CheckOverlap(ctx context.Context, startTime, endTime time.Time) (bool, error) {
@@ -69,7 +77,11 @@ func (m *MockTimeSlotRepository) GetByID(ctx context.Context, id string) (*model
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.TimeSlot), args.Error(1)
+	slot, ok := args.Get(0).(*models.TimeSlot)
+	if !ok {
+		return nil, args.Error(1)
+	}
+	return slot, args.Error(1)
 }
 
 func (m *MockTimeSlotRepository) List(ctx context.Context, ownerID, eventTypeID string, page, pageSize int, available *bool, startTime, endTime *time.Time) ([]models.TimeSlot, int, error) {
@@ -152,7 +164,11 @@ func (m *MockOwnerRepository) GetByID(ctx context.Context, id string) (*models.O
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.Owner), args.Error(1)
+	owner, ok := args.Get(0).(*models.Owner)
+	if !ok {
+		return nil, args.Error(1)
+	}
+	return owner, args.Error(1)
 }
 
 // MockSlotGenerationConfigRepository is a mock implementation of slot generation config repository

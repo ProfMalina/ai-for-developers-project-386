@@ -116,11 +116,11 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID, eventTypeI
 
 	loc := time.UTC
 	if timezoneName != "" {
-		if l, err := time.LoadLocation(timezoneName); err == nil {
+		if l, loadErr := time.LoadLocation(timezoneName); loadErr == nil {
 			loc = l
 			fmt.Printf("Using timezone: %s\n", timezoneName)
 		} else {
-			fmt.Printf("Failed to load timezone %s: %v, falling back to UTC\n", timezoneName, err)
+			fmt.Printf("Failed to load timezone %s: %v, falling back to UTC\n", timezoneName, loadErr)
 		}
 	} else {
 		fmt.Println("No timezone configured, using UTC")
@@ -129,10 +129,9 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID, eventTypeI
 	nowInLocation := time.Now().In(loc)
 	dateFrom := time.Date(nowInLocation.Year(), nowInLocation.Month(), nowInLocation.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, 1)
 	if req.DateFrom != "" {
-		var err error
-		parsed, err := time.ParseInLocation("2006-01-02", req.DateFrom, loc)
-		if err != nil {
-			return nil, fmt.Errorf("invalid date_from format: %w", err)
+		parsed, parseErr := time.ParseInLocation("2006-01-02", req.DateFrom, loc)
+		if parseErr != nil {
+			return nil, fmt.Errorf("invalid date_from format: %w", parseErr)
 		}
 		if !parsed.Before(dateFrom) {
 			dateFrom = parsed
@@ -141,11 +140,11 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID, eventTypeI
 
 	dateTo := dateFrom.AddDate(0, 0, 30)
 	if req.DateTo != "" {
-		var err error
-		dateTo, err = time.ParseInLocation("2006-01-02", req.DateTo, loc)
-		if err != nil {
-			return nil, fmt.Errorf("invalid date_to format: %w", err)
+		parsedDateTo, parseErr := time.ParseInLocation("2006-01-02", req.DateTo, loc)
+		if parseErr != nil {
+			return nil, fmt.Errorf("invalid date_to format: %w", parseErr)
 		}
+		dateTo = parsedDateTo
 	}
 	if dateTo.Before(dateFrom) {
 		return nil, fmt.Errorf("date_to must not be before date_from")
