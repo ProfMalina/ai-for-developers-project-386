@@ -312,18 +312,24 @@ func TestTimeSlotService_GenerateSlots_AppliesDefaultsAndSundayNumbering(t *test
 
 	ownerID := "test-owner-id"
 	eventTypeID := "event-type-id"
+	nowUTC := time.Now().UTC()
+	targetDate := time.Date(nowUTC.Year(), nowUTC.Month(), nowUTC.Day(), 0, 0, 0, 0, time.UTC).AddDate(0, 0, 1)
+	for targetDate.Weekday() != time.Sunday {
+		targetDate = targetDate.AddDate(0, 0, 1)
+	}
+	targetDateStr := targetDate.Format("2006-01-02")
 	req := models.SlotGenerationRequest{
 		WorkingHoursStart: "09:00",
 		WorkingHoursEnd:   "10:00",
-		DateFrom:          "2026-04-19",
-		DateTo:            "2026-04-19",
+		DateFrom:          targetDateStr,
+		DateTo:            targetDateStr,
 		DaysOfWeek:        []int{0},
 	}
 
 	owner := &models.Owner{ID: ownerID, Timezone: "UTC"}
 	eventType := &models.EventType{ID: eventTypeID, DurationMinutes: 30}
-	windowStart := time.Date(2026, 4, 19, 0, 0, 0, 0, time.UTC)
-	windowEnd := time.Date(2026, 4, 20, 0, 0, 0, 0, time.UTC)
+	windowStart := targetDate
+	windowEnd := targetDate.AddDate(0, 0, 1)
 
 	mockEtRepo.On("GetByID", mock.Anything, eventTypeID).Return(eventType, nil)
 	mockOwnerRepo.On("GetByID", mock.Anything, ownerID).Return(owner, nil)
