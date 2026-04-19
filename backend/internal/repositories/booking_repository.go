@@ -297,7 +297,7 @@ func (r *BookingRepository) Patch(ctx context.Context, id string, req models.Upd
 	args = append(args, id)
 
 	query := fmt.Sprintf("UPDATE bookings SET %s WHERE id = $%d RETURNING id, event_type_id, slot_id, guest_name, guest_email, timezone, start_time, end_time, status, created_at",
-		strings.Join(setClauses, ", "), argIdx+1)
+		strings.Join(setClauses, ", "), argIdx)
 
 	err = db.Pool.QueryRow(ctx, query, args...).Scan(
 		&booking.ID, &booking.EventTypeID, &booking.SlotID, &booking.GuestName,
