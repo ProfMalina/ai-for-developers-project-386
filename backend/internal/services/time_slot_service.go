@@ -127,25 +127,30 @@ func (s *TimeSlotService) GenerateSlots(ctx context.Context, ownerID, eventTypeI
 	}
 	// Parse dates
 	nowInLocation := time.Now().In(loc)
-	dateFrom := time.Date(nowInLocation.Year(), nowInLocation.Month(), nowInLocation.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, 1)
+	tomorrowMidnight := time.Date(nowInLocation.Year(), nowInLocation.Month(), nowInLocation.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, 1)
+
+	var dateFrom, dateTo time.Time
+
 	if req.DateFrom != "" {
 		parsed, parseErr := time.ParseInLocation("2006-01-02", req.DateFrom, loc)
 		if parseErr != nil {
 			return nil, fmt.Errorf("invalid date_from format: %w", parseErr)
 		}
-		if !parsed.Before(dateFrom) {
-			dateFrom = parsed
-		}
+		dateFrom = parsed
+	} else {
+		dateFrom = tomorrowMidnight
 	}
 
-	dateTo := dateFrom.AddDate(0, 0, 30)
 	if req.DateTo != "" {
-		parsedDateTo, parseErr := time.ParseInLocation("2006-01-02", req.DateTo, loc)
+		parsed, parseErr := time.ParseInLocation("2006-01-02", req.DateTo, loc)
 		if parseErr != nil {
 			return nil, fmt.Errorf("invalid date_to format: %w", parseErr)
 		}
-		dateTo = parsedDateTo
+		dateTo = parsed
+	} else {
+		dateTo = dateFrom.AddDate(0, 0, 30)
 	}
+
 	if dateTo.Before(dateFrom) {
 		return nil, fmt.Errorf("date_to must not be before date_from")
 	}
