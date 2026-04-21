@@ -42,3 +42,5 @@ backend/test-reports
 
 # Frontend test coverage
 frontend/coverage/
+
+.worktrees/
