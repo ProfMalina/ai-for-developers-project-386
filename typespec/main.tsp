@@ -418,6 +418,58 @@ namespace OwnerApi {
     @body result: SlotGenerationResult;
   } | BadRequestError | NotFoundError;
 
+  // --- Custom Schedule Management ---
+
+  /**
+   * Get the owner's custom schedule
+   * Returns the full schedule with day rules, breaks, and date exceptions
+   */
+  @get
+  @route("/schedule")
+  op getSchedule(): CustomSchedule | NotFoundError;
+
+  /**
+   * Create or update the owner's custom schedule
+   * Replaces any existing schedule with the provided data
+   */
+  @put
+  @route("/schedule")
+  op upsertSchedule(@body body: UpsertScheduleRequest): {
+    @statusCode statusCode: 200;
+    @body schedule: CustomSchedule;
+  } | BadRequestError;
+
+  /**
+   * Add or update schedule for specific days of week
+   * Only the provided days will be updated; other days remain unchanged
+   */
+  @patch
+  @route("/schedule/days")
+  op upsertDaySchedules(@body body: DaySchedule[]): {
+    @statusCode statusCode: 200;
+    @body schedule: CustomSchedule;
+  } | BadRequestError;
+
+  /**
+   * Add or update date exceptions
+   * Replaces all existing exceptions with the provided list
+   */
+  @put
+  @route("/schedule/exceptions")
+  op upsertDateExceptions(@body body: DateException[]): {
+    @statusCode statusCode: 200;
+    @body schedule: CustomSchedule;
+  } | BadRequestError;
+
+  /**
+   * Delete a specific date exception
+   */
+  @delete
+  @route("/schedule/exceptions/{date}")
+  op deleteDateException(
+    @path date: string,
+  ): void | NotFoundError;
+
   /**
    * Get all time slots for the owner (across all event types) with pagination
    * Shows both available and booked slots for calendar management
@@ -744,4 +796,144 @@ model TimezoneInfo {
    */
   @pattern("^[+-]\\d{2}:\\d{2}$")
   utcOffset: string;
+}
+
+// ============================================================================
+// Custom Schedule Models
+// ============================================================================
+
+/**
+ * A time window within a day (start and end time in HH:MM format)
+ */
+model ScheduleWindow {
+  /**
+   * Start time in HH:MM format (e.g., "09:00")
+   */
+  @pattern("^([01]\\d|2[0-3]):[0-5]\\d$")
+  startTime: string;
+
+  /**
+   * End time in HH:MM format (e.g., "12:00")
+   */
+  @pattern("^([01]\\d|2[0-3]):[0-5]\\d$")
+  endTime: string;
+}
+
+/**
+ * A break period that should be excluded from available slots
+ */
+model ScheduleBreak {
+  /**
+   * Start time of the break in HH:MM format (e.g., "12:00")
+   */
+  @pattern("^([01]\\d|2[0-3]):[0-5]\\d$")
+  startTime: string;
+
+  /**
+   * End time of the break in HH:MM format (e.g., "13:00")
+   */
+  @pattern("^([01]\\d|2[0-3]):[0-5]\\d$")
+  endTime: string;
+}
+
+/**
+ * Schedule for a specific day of week
+ * Contains multiple availability windows and optional breaks
+ */
+model DaySchedule {
+  /**
+   * Day of week: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+   */
+  @minValue(0)
+  @maxValue(6)
+  dayOfWeek: int32;
+
+  /**
+   * One or more availability windows for this day
+   */
+  @minItems(1)
+  windows: ScheduleWindow[];
+
+  /**
+   * Optional breaks during the day that are not available
+   */
+  breaks?: ScheduleBreak[];
+}
+
+/**
+ * Type of date exception
+ */
+enum ExceptionType {
+  /** Custom schedule for a specific date */
+  custom,
+  /** Date is a holiday / day off (no availability) */
+  holiday,
+}
+
+/**
+ * An exception that overrides the default schedule for a specific date
+ */
+model DateException {
+  /**
+   * Date in ISO 8601 format (e.g., "2026-05-09")
+   */
+  @pattern("^\\d{4}-\\d{2}-\\d{2}$")
+  date: string;
+
+  /**
+   * Type of exception: custom schedule or holiday/day off
+   */
+  exceptionType: ExceptionType;
+
+  /**
+   * Custom windows for this date (only if exceptionType is "custom")
+   */
+  windows?: ScheduleWindow[];
+
+  /**
+   * Custom breaks for this date (only if exceptionType is "custom")
+   */
+  breaks?: ScheduleBreak[];
+
+  /**
+   * Optional description (e.g., "New Year", "Team meeting")
+   */
+  @maxLength(255)
+  description?: string;
+}
+
+/**
+ * Custom schedule for an owner
+ * Defines flexible availability rules, breaks, and exceptions
+ */
+model CustomSchedule {
+  @minLength(1)
+  @maxLength(100)
+  ownerId: string;
+
+  /**
+   * Schedule for each day of the week
+   */
+  daySchedules: DaySchedule[];
+
+  /**
+   * Exceptions for specific dates
+   */
+  exceptions?: DateException[];
+}
+
+/**
+ * Request to create or update custom schedule
+ */
+model UpsertScheduleRequest {
+  /**
+   * Schedule for each day of the week
+   * Should contain all 7 days or a subset to update
+   */
+  daySchedules: DaySchedule[];
+
+  /**
+   * Exceptions for specific dates
+   */
+  exceptions?: DateException[];
 }
