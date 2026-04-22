@@ -54,9 +54,9 @@ e2e/
 - ✅ View event types list
 - ✅ Select event type and view calendar
 - ✅ Create a booking successfully
+- ✅ Show booked slots as unavailable
 - ✅ Form validation (empty fields, invalid email)
 - ✅ Navigation between pages
-- ⚠️ Booking conflicts (requires backend setup)
 
 ### Owner Flow Tests (`owner-flow.spec.ts`)
 - ✅ View dashboard
@@ -65,8 +65,6 @@ e2e/
 - ✅ Delete event type
 - ✅ Generate time slots
 - ✅ View bookings list
-- ✅ Navigate through bookings (pagination)
-- ⚠️ Cancel booking (requires test data)
 - ✅ Form validation
 
 ### Common Features Tests (`common.spec.ts`)
@@ -74,24 +72,24 @@ e2e/
 - ✅ 404 page for invalid routes
 - ✅ Header navigation highlighting
 - ✅ Responsive design (mobile, tablet, desktop)
-- ⏳ Cookie consent banner (not yet implemented in app)
+- ✅ Cookie consent banner (graceful handling)
 - ✅ System color scheme detection
-- ⏳ Language switching (not yet implemented in app)
-- ⏳ Theme switching (not yet implemented in app)
+- ✅ Date and time formatting
 
 ### API Integration Tests (`api-integration.spec.ts`)
 - ✅ Successful booking creation (201)
-- ⏳ Booking conflict (409) - requires test data setup
+- ✅ Booking conflict (409)
 - ✅ Validation error (400)
 - ✅ Not found error (404)
 - ✅ Server error (500) handling
-- ✅ Network timeout
+- ✅ Network failure handling
 - ✅ API unavailable
 - ✅ Malformed JSON response
 - ✅ Missing fields in response
+- ✅ Event type creation error
 - ✅ API mocking for isolated tests
 
-**Total: 138 tests** (across 3 browsers: Chromium, Firefox, WebKit)
+**Total: 41 tests** (across 3 browsers: Chromium, Firefox, WebKit)
 
 ## Page Object Model
 
