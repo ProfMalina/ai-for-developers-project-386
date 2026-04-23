@@ -155,4 +155,4 @@ TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/booking_test_db?ss
 
 Repository integration tests are skipped when `TEST_DATABASE_URL` is unset, to avoid truncating a developer's default application database.
 
-Backend CI pins `golangci-lint` `v2.11.4`, runs PostgreSQL-backed backend tests, checks formatting, and enforces a backend coverage floor of 30%.
+Backend CI pins `golangci-lint` `v2.11.4`, runs PostgreSQL-backed backend tests, checks formatting, and enforces a backend coverage floor of 18%.
