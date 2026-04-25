@@ -70,6 +70,8 @@ npx @stoplight/prism-cli mock -h 0.0.0.0 -p 4010 ../typespec/tsp-output/schema/o
 
 The mock API will be available at `http://localhost:4010`
 
+For unit testing, MSW (Mock Service Worker) is used in `src/test/`.
+
 ### Environment Variables
 
 - `.env.development` - Uses mock API at `http://localhost:4010`
@@ -138,7 +140,7 @@ The frontend integrates with the backend API following the TypeSpec contract:
 - `POST /api/event-types` - Create event type
 - `GET /api/event-types` - List event types (paginated)
 - `GET /api/event-types/:id` - Get event type details
-- `PUT /api/event-types/:id` - Update event type
+- `PATCH /api/event-types/:id` - Update event type
 - `DELETE /api/event-types/:id` - Delete event type
 - `GET /api/bookings` - List all bookings (paginated)
 - `GET /api/bookings/:id` - Get booking details
