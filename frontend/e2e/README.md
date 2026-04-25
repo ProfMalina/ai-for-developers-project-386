@@ -91,7 +91,7 @@ e2e/
 - ✅ Missing fields in response
 - ✅ API mocking for isolated tests
 
-**Total: 138 tests** (across 3 browsers: Chromium, Firefox, WebKit)
+**Total: 44 tests** (runs across 3 browsers: Chromium, Firefox, WebKit)
 
 ## Page Object Model
 
