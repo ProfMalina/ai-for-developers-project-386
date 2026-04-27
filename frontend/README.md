@@ -138,7 +138,7 @@ The frontend integrates with the backend API following the TypeSpec contract:
 - `POST /api/event-types` - Create event type
 - `GET /api/event-types` - List event types (paginated)
 - `GET /api/event-types/:id` - Get event type details
-- `PUT /api/event-types/:id` - Update event type
+- `PATCH /api/event-types/:id` - Update event type (partial update)
 - `DELETE /api/event-types/:id` - Delete event type
 - `GET /api/bookings` - List all bookings (paginated)
 - `GET /api/bookings/:id` - Get booking details
