@@ -4,7 +4,7 @@ Go backend implementation for the calendar booking application, following the Ty
 
 ## Prerequisites
 
-- Go 1.25+
+- Go 1.25.0+
 - PostgreSQL 15+
 - Docker and Docker Compose (for containerized deployment)
 

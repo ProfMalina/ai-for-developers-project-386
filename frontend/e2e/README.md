@@ -91,7 +91,7 @@ e2e/
 - ✅ Missing fields in response
 - ✅ API mocking for isolated tests
 
-**Total: 138 tests** (across 3 browsers: Chromium, Firefox, WebKit)
+**Total: ~41 tests** (across 3 browsers: Chromium, Firefox, WebKit)
 
 ## Page Object Model
 
@@ -168,13 +168,13 @@ npx playwright test --project=chromium
 npx playwright test --update-snapshots
 ```
 
-## Requirements Not Yet Implemented
+## Requirements Not Yet Fully Implemented in App
 
-The following tests are marked as placeholders because the features are not yet implemented in the app:
+The following features from SPEC.MD are not fully implemented:
 
 - **Cookie consent banner** — SPEC.MD requirement
-- **Language switching (i18n)** — SPEC.MD requirement (Russian/English)
 - **Theme switching** — SPEC.MD requirement (light/dark/system)
+- **Language switching (i18n)** — Only Russian locale is hardcoded; English option required but not implemented
 
 These tests will become functional once the corresponding features are added to the frontend.
 
