@@ -93,16 +93,18 @@ backend/
 │   └── server/
 │       └── main.go              # Application entry point
 ├── internal/
+│   ├── app/                     # Application bootstrap (router, container)
 │   ├── config/                  # Configuration management
 │   ├── db/                      # Database connection and migrations
 │   ├── handlers/                # HTTP request handlers
 │   ├── middleware/              # HTTP middleware
 │   ├── models/                  # Data models
 │   ├── repositories/            # Data access layer
+│   │   └── memory/             # In-memory repository implementations
 │   └── services/                # Business logic layer
 ├── migrations/                  # Database migrations
 ├── scripts/                     # Utility scripts
-├── .env                         # Environment variables
+├── .env                         # Environment variables (not committed)
 ├── docker-compose.yml           # Docker Compose configuration
 ├── Dockerfile                   # Docker build configuration
 └── go.mod                       # Go module definition

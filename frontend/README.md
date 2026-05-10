@@ -105,28 +105,36 @@ npm run preview
 frontend/
 ├── src/
 │   ├── api/
-│   │   └── client.ts          # API client with Axios
+│   │   └── client.ts              # API client with Axios
 │   ├── components/
 │   │   ├── layout/
-│   │   │   └── Header.tsx     # App header component
+│   │   │   └── Header.tsx         # App header component
 │   │   └── owner/
 │   │       ├── EventTypeManagement.tsx   # CRUD for event types
-│   │       └── BookingsList.tsx          # View/cancel bookings
+│   │       ├── BookingsList.tsx          # View/cancel bookings
+│   │       └── SlotGeneration.tsx       # Generate time slots
 │   ├── pages/
 │   │   ├── guest/
-│   │   │   ├── GuestHome.tsx   # Public event types listing
-│   │   │   └── BookingPage.tsx # Calendar and booking form
+│   │   │   ├── GuestHome.tsx      # Public event types listing
+│   │   │   └── BookingPage.tsx   # Calendar and booking form
 │   │   ├── owner/
-│   │   │   └── OwnerDashboard.tsx  # Owner main page
-│   │   └── NotFound.tsx        # 404 page
+│   │   │   └── OwnerDashboard.tsx # Owner main page
+│   │   └── NotFound.tsx           # 404 page
+│   ├── test/
+│   │   ├── setup.ts               # Vitest + MSW setup
+│   │   └── mocks.ts               # API mock handlers
 │   ├── types/
-│   │   └── api.ts              # TypeScript type definitions
-│   ├── App.tsx                 # Main app component with routing
-│   ├── main.tsx                # App entry point
-│   └── index.css               # Global styles
-├── .env.development            # Dev environment variables
-├── .env.production             # Production environment variables
-├── mock-api.sh                 # Script to start Prism mock server
+│   │   └── api.ts                 # TypeScript type definitions
+│   ├── utils/
+│   │   ├── validation.ts          # Input validation
+│   │   └── slots.ts               # Slot utilities
+│   ├── App.tsx                    # Main app component with routing
+│   ├── main.tsx                   # App entry point
+│   └── index.css                  # Global styles
+├── e2e/                          # Playwright E2E tests
+├── .env.development               # Dev environment variables
+├── .env.production                # Production environment variables
+├── mock-api.sh                    # Script to start Prism mock server
 └── package.json
 ```
 
@@ -138,8 +146,9 @@ The frontend integrates with the backend API following the TypeSpec contract:
 - `POST /api/event-types` - Create event type
 - `GET /api/event-types` - List event types (paginated)
 - `GET /api/event-types/:id` - Get event type details
-- `PUT /api/event-types/:id` - Update event type
+- `PATCH /api/event-types/:id` - Update event type
 - `DELETE /api/event-types/:id` - Delete event type
+- `POST /api/event-types/:id/slots/generate` - Generate time slots
 - `GET /api/bookings` - List all bookings (paginated)
 - `GET /api/bookings/:id` - Get booking details
 - `DELETE /api/bookings/:id` - Cancel booking
@@ -184,10 +193,10 @@ The app provides comprehensive error handling:
 ## Browser Support
 
 The app supports modern browsers:
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
+- Chrome 120+
+- Firefox 121+
+- Safari 17+
+- Edge 120+
 
 ## Scripts
 
