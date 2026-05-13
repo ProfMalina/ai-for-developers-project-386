@@ -102,7 +102,6 @@ backend/
 │   └── services/                # Business logic layer
 ├── migrations/                  # Database migrations
 ├── scripts/                     # Utility scripts
-├── .env                         # Environment variables
 ├── docker-compose.yml           # Docker Compose configuration
 ├── Dockerfile                   # Docker build configuration
 └── go.mod                       # Go module definition
