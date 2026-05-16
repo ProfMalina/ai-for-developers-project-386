@@ -41,7 +41,7 @@ The server will start on `http://localhost:8080`
 - `POST /api/event-types` - Create event type
 - `GET /api/event-types` - List event types (paginated)
 - `GET /api/event-types/{id}` - Get event type by ID
-- `PATCH /api/event-types/{id}` - Update event type
+- `PATCH /api/event-types/{id}` - Update event type (partial update)
 - `DELETE /api/event-types/{id}` - Delete event type
 - `POST /api/event-types/{id}/slots/generate` - Generate time slots
 - `GET /api/slots` - List time slots
