@@ -100,7 +100,7 @@ This document verifies that the TypeSpec API specification (`typespec/main.tsp`)
 | POST | `/api/event-types` | Create event type |
 | GET | `/api/event-types` | List all event types |
 | GET | `/api/event-types/{id}` | Get event type by ID |
-| PUT | `/api/event-types/{id}` | Update event type |
+| PATCH | `/api/event-types/{id}` | Update event type |
 | DELETE | `/api/event-types/{id}` | Delete event type |
 | GET | `/api/bookings` | List all upcoming bookings |
 | GET | `/api/bookings/{id}` | Get booking by ID |
