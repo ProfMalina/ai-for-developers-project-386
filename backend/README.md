@@ -62,7 +62,7 @@ The server will start on `http://localhost:8080`
 
 ## Configuration
 
-Environment variables (or `.env` file):
+Environment variables (copy `.env.example` to `.env` and configure):
 
 ```env
 SERVER_PORT=8080
@@ -102,7 +102,7 @@ backend/
 │   └── services/                # Business logic layer
 ├── migrations/                  # Database migrations
 ├── scripts/                     # Utility scripts
-├── .env                         # Environment variables
+├── .env.example                 # Environment variables template
 ├── docker-compose.yml           # Docker Compose configuration
 ├── Dockerfile                   # Docker build configuration
 └── go.mod                       # Go module definition
