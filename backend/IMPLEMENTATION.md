@@ -44,9 +44,12 @@ backend/
 │       └── time_slot_service.go         # Time slot business logic
 ├── migrations/
 │   ├── 001_initial_schema.down.sql
-│   └── 001_initial_schema.up.sql        # Complete database schema
+│   ├── 001_initial_schema.up.sql        # Complete database schema
+│   ├── 002_make_slots_owner_level.up.sql
+│   └── 003_restore_event_type_id_to_time_slots.up.sql
 ├── scripts/
-│   └── wait-for-postgres.sh     # PostgreSQL wait script
+│   ├── wait-for-postgres.sh     # PostgreSQL wait script
+│   └── test-api.sh              # API smoke test script
 ├── .env                         # Environment variables
 ├── .gitignore                   # Git ignore rules
 ├── docker-compose.yml           # PostgreSQL Docker configuration
