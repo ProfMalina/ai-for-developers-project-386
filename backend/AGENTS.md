@@ -32,7 +32,7 @@ backend/
 - Preserve the no-overlapping-bookings invariant in service/repository changes.
 - Use project Make targets when possible: `make backend-build`, `make backend-run`, `make backend-test`, `make backend-lint`, `make backend-fmt`.
 - Backend CI uses `go test ./... -v -race -coverprofile=coverage.out`, `go vet`, `gofmt -l .`, and `go build -v ./...`.
-- Current CI coverage floor is 18%; do not lower it casually.
+- Current CI coverage floor is 30%; do not lower it casually.
 
 ## ANTI-PATTERNS
 - Do not put business rules only in handlers.

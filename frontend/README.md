@@ -138,9 +138,10 @@ The frontend integrates with the backend API following the TypeSpec contract:
 - `POST /api/event-types` - Create event type
 - `GET /api/event-types` - List event types (paginated)
 - `GET /api/event-types/:id` - Get event type details
-- `PUT /api/event-types/:id` - Update event type
+- `PATCH /api/event-types/:id` - Update event type
 - `DELETE /api/event-types/:id` - Delete event type
-- `GET /api/bookings` - List all bookings (paginated)
+- `POST /api/event-types/:id/slots/generate` - Generate time slots
+- `GET /api/bookings` - List all bookings (paginated, supports dateFrom, dateTo, timezone, sortBy, sortOrder)
 - `GET /api/bookings/:id` - Get booking details
 - `DELETE /api/bookings/:id` - Cancel booking
 - `GET /api/slots` - List all time slots (paginated)
