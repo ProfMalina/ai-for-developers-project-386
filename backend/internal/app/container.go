@@ -23,10 +23,12 @@ type Container struct {
 	PublicEventTypeHandler *handlers.PublicEventTypeHandler
 	PublicBookingHandler   *handlers.PublicBookingHandler
 	OwnerHandler           *handlers.OwnerHandler
+	ScheduleHandler        *handlers.ScheduleHandler
 	BookingService         *services.BookingService
 	TimeSlotService        *services.TimeSlotService
 	EventTypeService       *services.EventTypeService
 	OwnerService           *services.OwnerService
+	ScheduleService        *services.ScheduleService
 }
 
 func NewContainer(cfg ContainerConfig) (*Container, error) {
@@ -45,6 +47,7 @@ func NewContainer(cfg ContainerConfig) (*Container, error) {
 			repositories.NewEventTypeRepository(),
 		)
 		ownerService := services.NewOwnerService(repositories.NewOwnerRepository())
+		scheduleService := services.NewScheduleService(repositories.NewScheduleRepository())
 
 		return &Container{
 			Mode:                   StorageModePostgres,
@@ -52,12 +55,14 @@ func NewContainer(cfg ContainerConfig) (*Container, error) {
 			TimeSlotService:        timeSlotService,
 			BookingService:         bookingService,
 			OwnerService:           ownerService,
+			ScheduleService:        scheduleService,
 			EventTypeHandler:       handlers.NewEventTypeHandlerWithService(eventTypeService),
 			TimeSlotHandler:        handlers.NewTimeSlotHandlerWithService(timeSlotService),
 			BookingHandler:         handlers.NewBookingHandlerWithService(bookingService),
 			PublicEventTypeHandler: handlers.NewPublicEventTypeHandlerWithServices(eventTypeService, timeSlotService),
 			PublicBookingHandler:   handlers.NewPublicBookingHandlerWithService(bookingService),
 			OwnerHandler:           handlers.NewOwnerHandlerWithService(ownerService),
+			ScheduleHandler:        handlers.NewScheduleHandlerWithService(scheduleService),
 		}, nil
 	}
 
@@ -80,6 +85,7 @@ func NewContainer(cfg ContainerConfig) (*Container, error) {
 		memrepo.NewEventTypeRepository(store),
 	)
 	ownerService := services.NewOwnerService(memrepo.NewOwnerRepository(store))
+	scheduleService := services.NewScheduleService(memrepo.NewScheduleRepository(store))
 
 	return &Container{
 		Mode:                   StorageModeMemory,
@@ -87,11 +93,13 @@ func NewContainer(cfg ContainerConfig) (*Container, error) {
 		TimeSlotService:        timeSlotService,
 		BookingService:         bookingService,
 		OwnerService:           ownerService,
+		ScheduleService:        scheduleService,
 		EventTypeHandler:       handlers.NewEventTypeHandlerWithService(eventTypeService),
 		TimeSlotHandler:        handlers.NewTimeSlotHandlerWithService(timeSlotService),
 		BookingHandler:         handlers.NewBookingHandlerWithService(bookingService),
 		PublicEventTypeHandler: handlers.NewPublicEventTypeHandlerWithServices(eventTypeService, timeSlotService),
 		PublicBookingHandler:   handlers.NewPublicBookingHandlerWithService(bookingService),
 		OwnerHandler:           handlers.NewOwnerHandlerWithService(ownerService),
+		ScheduleHandler:        handlers.NewScheduleHandlerWithService(scheduleService),
 	}, nil
 }

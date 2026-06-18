@@ -47,3 +47,13 @@ type OwnerRepository interface {
 type SlotGenerationConfigRepository interface {
 	Create(ctx context.Context, config *models.SlotGenerationConfig) error
 }
+
+// ScheduleRepository defines the interface for custom schedule data operations
+type ScheduleRepository interface {
+	GetDaySchedules(ctx context.Context, ownerID string) ([]models.DaySchedule, error)
+	UpsertDaySchedule(ctx context.Context, schedule *models.DaySchedule) error
+	GetDateExceptions(ctx context.Context, ownerID string) ([]models.DateException, error)
+	UpsertDateException(ctx context.Context, exception *models.DateException) error
+	DeleteDateException(ctx context.Context, ownerID, date string) error
+	GetByDate(ctx context.Context, ownerID string, date string) (*models.DateException, error)
+}
